@@ -678,11 +678,146 @@ input:focus, select:focus, textarea:focus {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
+/* ── MOBILE BOTTOM NAV ────────────────────────────────────────────────────── */
+.mobile-bottom-nav { display: none; }
+.profile-toggle-bar { display: none; }
+
+/* ── TABLET (≤ 900px) ─────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .workspace { grid-template-columns: 1fr; }
   .profile-panel { border-right: none; border-bottom: 1px solid var(--border); }
   .feature-grid { grid-template-columns: 1fr 1fr; }
-  .essays-layout { grid-template-columns: 1fr; }
+  .essays-layout { grid-template-columns: 1fr; height: auto; }
+  .strategy-chat { height: auto; min-height: 400px; }
+}
+
+/* ── MOBILE (≤ 768px) ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  :root { --topbar-h: 48px; }
+
+  /* Topbar — compact */
+  .topbar { padding: 0 12px 0 0; }
+  .topbar-logo { width: auto; padding: 0 12px; gap: 8px; }
+  .topbar-logo-sub { display: none; }
+  .topbar-title { display: none; }
+  .topbar-status { display: none; }
+  .user-badge { display: none; }
+  .budget-pill { display: none !important; }
+  .btn-logout { font-size: 11px; padding: 4px 8px; margin-left: 6px; }
+
+  /* Sidebar — hidden on mobile (replaced by bottom nav) */
+  .sidebar { display: none; }
+
+  /* Main content — no sidebar offset */
+  .main-content { margin-left: 0; }
+
+  /* Add space for bottom nav */
+  .layout { padding-bottom: 56px; }
+
+  /* Workspace — stack vertically, rows hug content */
+  .workspace { grid-template-columns: 1fr; align-content: start; }
+  .profile-panel { border-right: none; border-bottom: 1px solid var(--border); }
+
+  /* Profile toggle bar — shown on mobile */
+  .profile-toggle-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--sidebar-bg);
+    color: #94a3b8;
+    padding: 9px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .profile-toggle-bar:hover { background: #1e293b; }
+  .profile-toggle-arrow { font-size: 10px; transition: transform .2s; }
+  .profile-toggle-bar.collapsed .profile-toggle-arrow { transform: rotate(-90deg); }
+
+  /* Tab bar — scrollable */
+  .tab-bar { overflow-x: auto; padding: 0 6px; -webkit-overflow-scrolling: touch; }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab { padding: 10px 10px; font-size: 11.5px; white-space: nowrap; }
+
+  /* Panels */
+  .panel { padding: 14px 12px; }
+
+  /* Feature grid — 2-col on mobile */
+  .feature-grid { grid-template-columns: 1fr 1fr; margin: 0 0 14px; gap: 10px; }
+  .feature-card { padding: 12px; }
+
+  /* Welcome state */
+  .welcome-state { padding: 40px 20px; margin: 16px; }
+
+  /* Result bar — wrap */
+  .result-bar { flex-wrap: wrap; gap: 10px; padding: 10px 14px; }
+  .pdf-download-btn { font-size: 11px; padding: 5px 10px; }
+
+  /* Scholarship cards */
+  .s-card-top { flex-wrap: wrap; }
+  .s-footer { flex-wrap: wrap; }
+  .s-apply-btn { margin-left: 0; font-size: 11px; padding: 6px 12px; }
+
+  /* College cards */
+  .c-rates { grid-template-columns: repeat(3, 1fr); margin: 0 10px 8px; }
+  .c-rate-cell .rate-num { font-size: 14px; }
+  .c-stats { padding: 0 10px 6px; }
+  .c-fit-note, .c-program-note { margin: 0 10px 8px; }
+  .c-timeline { margin: 0 10px 8px; }
+  .c-footer { flex-wrap: wrap; }
+
+  /* Apply panel header */
+  .apply-header { margin: -14px -12px 14px; padding: 12px 14px; flex-wrap: wrap; gap: 10px; }
+
+  /* Strategy chat */
+  .strategy-chat { height: calc(100vh - 180px); min-height: 360px; }
+  .chat-input-area textarea { height: 46px; font-size: 13px; }
+
+  /* Essays */
+  .essays-layout { grid-template-columns: 1fr; height: auto; margin: -14px -12px; }
+  .essays-form { max-height: 320px; overflow-y: auto; }
+  .essay-type-grid { grid-template-columns: 1fr 1fr; }
+
+  /* Insights */
+  .insights-grid { grid-template-columns: 1fr; }
+
+  /* Auth card */
+  .auth-card { padding: 32px 24px; max-width: 320px; }
+
+  /* Mobile bottom nav */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    background: var(--sidebar-bg);
+    border-top: 1px solid rgba(255,255,255,.08);
+    z-index: 150;
+    justify-content: space-around;
+    align-items: stretch;
+  }
+  .mbn-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px 2px;
+    color: #64748b;
+    font-size: 9px;
+    font-weight: 500;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    transition: color .15s, border-top-color .15s;
+    border-top: 2px solid transparent;
+    user-select: none;
+  }
+  .mbn-item .mbn-icon { font-size: 17px; line-height: 1; }
+  .mbn-item.active { color: #fff; border-top-color: var(--sidebar-accent); }
+  .mbn-item:active { background: rgba(255,255,255,.05); }
 }
 
 /* ── AUTH OVERLAY ─────────────────────────────────────────────────────────── */
@@ -934,8 +1069,14 @@ input:focus, select:focus, textarea:focus {
   <div class="main-content">
     <div class="workspace">
 
+      <!-- MOBILE: collapsible profile toggle -->
+      <div class="profile-toggle-bar" id="profile-toggle-bar" onclick="toggleProfile()">
+        <span>📝 Student Profile &amp; Settings</span>
+        <span class="profile-toggle-arrow" id="profile-toggle-arrow">▼</span>
+      </div>
+
       <!-- PROFILE INPUT PANEL -->
-      <aside class="profile-panel">
+      <aside class="profile-panel" id="profile-panel">
         <div class="profile-section">
           <div class="profile-section-title">Student Profile</div>
           <div class="field-row"><label>Full Name</label><input type="text" id="studentName" placeholder="Your name"></div>
@@ -1240,6 +1381,17 @@ input:focus, select:focus, textarea:focus {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('panel-' + name).classList.add('active');
     document.querySelectorAll('.nav-item').forEach((n, i) => n.classList.toggle('active', names[i] === name));
+    document.querySelectorAll('.mbn-item').forEach((n, i) => n.classList.toggle('active', names[i] === name));
+    window.scrollTo(0, 0);
+  }
+
+  function toggleProfile() {
+    const panel = document.getElementById('profile-panel');
+    const bar   = document.getElementById('profile-toggle-bar');
+    const arrow = document.getElementById('profile-toggle-arrow');
+    const collapsed = bar.classList.toggle('collapsed');
+    panel.style.display = collapsed ? 'none' : '';
+    arrow.textContent = collapsed ? '▶' : '▼';
   }
 
   // ── Security helpers ──────────────────────────────────────────────────────
@@ -2846,5 +2998,15 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
     section.style.display = 'block';
   }
 </script>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+  <div class="mbn-item active" onclick="switchTab('discover')"><span class="mbn-icon">🔍</span><span>Discover</span></div>
+  <div class="mbn-item" onclick="switchTab('apply')"><span class="mbn-icon">📋</span><span>Apply</span></div>
+  <div class="mbn-item" onclick="switchTab('insights')"><span class="mbn-icon">📊</span><span>Insights</span></div>
+  <div class="mbn-item" onclick="switchTab('strategy')"><span class="mbn-icon">🧭</span><span>Strategy</span></div>
+  <div class="mbn-item" onclick="switchTab('essays')"><span class="mbn-icon">✍️</span><span>Essays</span></div>
+  <div class="mbn-item" onclick="switchTab('colleges')"><span class="mbn-icon">🎓</span><span>Colleges</span></div>
+</nav>
 </body>
 </html>
