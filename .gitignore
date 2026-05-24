@@ -1,0 +1,16 @@
+# Secrets — never commit these
+.env
+
+# Node
+node_modules/
+npm-debug.log
+
+# Server log files (may contain request data / tokens)
+server.log
+server.err
+*.log
+*.err
+
+# OS
+.DS_Store
+Thumbs.db

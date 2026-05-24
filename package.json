@@ -1,0 +1,15 @@
+{
+  "name": "scholarship-finder",
+  "version": "1.0.0",
+  "description": "AI-powered underutilized scholarship discovery tool",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": ["scholarship", "college", "financial-aid", "AI"],
+  "license": "MIT"
+}
