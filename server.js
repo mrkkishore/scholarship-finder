@@ -980,7 +980,7 @@ ${searchBlock}
 TASK:
 1. Assess EVERY listed school with a full admission profile (isListed: true)
 2. ${topPool
-  ? `The student has not listed enough out-of-state schools. Select 4–6 schools from the TOP RANKED ${topPool.category.toUpperCase()} PROGRAMS list in the system prompt (isListed: false). Choose a balanced mix: 1–2 safeties or strong targets, 2 targets, 1–2 reaches. Each must include a fitNote that references the student's specific GPA (${gpa}), test scores (${testScore}), home state (${homeState}), and how the program fits their major interests. Do NOT suggest schools already on their list.`
+  ? `The student has listed NO out-of-state schools. Select exactly 25 schools from the TOP RANKED ${topPool.category.toUpperCase()} PROGRAMS list in the system prompt (isListed: false). Work through the ranked list from top to bottom, picking schools where the student has a realistic chance at some tier level. Cover the full spectrum: ~5 safeties, ~10 targets, ~7 reaches, ~3 longshots. For each, write a single concise fitNote referencing the student's GPA (${gpa}), test scores (${testScore}), and home state (${homeState}). TOKEN-SAVING RULE: for isListed:false schools, use null for these fields to save space — inStateRate, admittedACTRange, edBoost, programNote, netPriceInState, tips, keyMilestones. Do NOT suggest schools already on their list.`
   : `Suggest 3–5 additional colleges NOT on their list that are strong fits (isListed: false) — include at least 1 safety, 1–2 targets. Base suggestions on GPA, scores, state, and major.`
 }
 
@@ -1034,12 +1034,19 @@ IMPORTANT JSON RULES:
 - businessSchoolRank: US News Undergraduate Business Programs rank ONLY — this is separate from the university rank. For a business major this is the critical number. e.g. "#12 Undergraduate Business Programs (US News 2026)". Use the VERIFIED RANKINGS above where provided
 - topSpecialties: 2–3 standout specialty rankings relevant to the student's major, e.g. "Supply Chain #5, Accounting Top 15". Use null if no notable specialties
 - Every string value must be properly quoted; no extra words outside of string or number values
-- Keep keyMilestones to exactly 3 short items to stay within token limits
+${topPool
+  ? `- TOKEN BUDGET — isListed:false schools MUST use null for: inStateRate, admittedACTRange, edBoost, programNote, netPriceInState, tips, keyMilestones. Only fill: name, location, isListed, tier, overallAcceptRate, outStateRate, admittedGPARange, admittedSATRange, universityRank, businessSchoolRank, topSpecialties, fitNote (1 sentence), netPriceOutState, applicationDeadlines (4 fields), idealStartDate, applicationUrl. This keeps each entry short so all 25 fit in one response.`
+  : `- Keep keyMilestones to exactly 3 short items to stay within token limits`}
 Respond ONLY with a valid JSON array — no preamble, no markdown fences.`;
+
+      // When returning 25 pool suggestions + listed schools, token needs are higher.
+      // Base (listed schools only): ~350 tokens each. Pool mode (25 lighter cards): ~150 each.
+      // 3 listed × 350 + 25 pool × 150 ≈ 4,800 — use 8,000 headroom to avoid truncation.
+      const collegeMaxTokens = topPool ? 8_000 : 6_000;
 
       const claudePayload = JSON.stringify({
         model:      FORCED_MODEL,
-        max_tokens: 6_000,
+        max_tokens: collegeMaxTokens,
         system:     systemPrompt,
         messages:   [{ role: "user", content: userPrompt }],
       });
