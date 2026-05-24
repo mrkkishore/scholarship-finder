@@ -466,10 +466,11 @@ function buildTopSchoolPool(major, listedNames) {
     });
   });
 
+  const pool = available.slice(0, 15);
   return {
     category,
-    count: available.length,
-    formatted: available.map(s => `  #${s.rank}: ${s.name} (${s.state})`).join("\n"),
+    count: pool.length,
+    formatted: pool.map(s => `  #${s.rank}: ${s.name} (${s.state})`).join("\n"),
   };
 }
 
@@ -1044,10 +1045,10 @@ Respond ONLY with a valid JSON array — no preamble, no markdown fences.`;
 
       // Token budget reality check (pool mode):
       // ~3 listed schools × 450 tokens (full fields) = 1,350
-      // ~25 pool schools × 250 tokens (light fields) = 6,250
-      // Total ≈ 7,600 — use 12,000 for comfortable headroom so truncation never occurs.
+      // ~15 pool schools × 250 tokens (light fields) = 3,750
+      // Total ≈ 5,100 — use 8,000 for comfortable headroom so truncation never occurs.
       // Non-pool mode: up to 8 schools × 450 = 3,600 → 6,000 is sufficient.
-      const collegeMaxTokens = topPool ? 12_000 : 6_000;
+      const collegeMaxTokens = topPool ? 8_000 : 6_000;
 
       const claudePayload = JSON.stringify({
         model:      FORCED_MODEL,
