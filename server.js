@@ -1428,10 +1428,11 @@ Respond ONLY with a valid JSON array — no preamble, no markdown fences.`;
   });
 });
 
-server.listen(PORT, "127.0.0.1", () => {
+const HOST = process.env.HOST || (process.env.RAILWAY_ENVIRONMENT ? "0.0.0.0" : "127.0.0.1");
+server.listen(PORT, HOST, () => {
   console.log("\n✅  Scholarship Finder running!");
   console.log(`    Local:      http://localhost:${PORT}`);
   console.log("    API key:    secured server-side ✓");
   console.log("    Rate limit: 10 req/min per IP ✓");
-  console.log("    Bound to:   127.0.0.1 (localhost only) ✓\n");
+  console.log(`    Bound to:   ${HOST} ✓\n`);
 });
