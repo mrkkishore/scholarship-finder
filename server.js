@@ -784,9 +784,11 @@ ${countInstruction}
 Mix where possible: underutilized in-state · national/out-of-state · niche/identity · hidden gems.
 All must be open to HIGH SCHOOL SENIORS / incoming college freshmen.
 
+IMPORTANT: For applicationUrl, use the real official URL from the search results above. If the search results include a direct link to the scholarship page, use it exactly. If not in search results but you know the official website, use that. Never leave it blank — at minimum use the sponsoring organization's homepage.
+
 Respond ONLY with a valid JSON array — no preamble, no markdown.
 
-[{"title":"","organization":"","amount":"","type":"underutilized|merit|need|local|external|identity|activity","scope":"in-state|national|out-of-state","isUnderutilized":true,"description":"","competitionLevel":"Very Low|Low|Moderate|High","deadline":"","requirements":[],"whyUnderutilized":"","targetedFor":"","applicationUrl":"","estimatedApplicants":0,"estimatedWinners":0}]`;
+[{"title":"","organization":"","amount":"","type":"underutilized|merit|need|local|external|identity|activity","scope":"in-state|national|out-of-state","isUnderutilized":true,"description":"","competitionLevel":"Very Low|Low|Moderate|High","deadline":"","requirements":[],"whyUnderutilized":"","targetedFor":"","applicationUrl":"scholarship.org/apply","estimatedApplicants":0,"estimatedWinners":0}]`;
 
       const claudePayload = JSON.stringify({
         model:      FORCED_MODEL,

@@ -324,6 +324,19 @@ input:focus, select:focus, textarea:focus {
 .cs-tier-badge.out-state { background:#dbeafe;color:#1e40af; }
 .cs-card-row { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px; }
 
+.schol-card {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-badge { font-size: 11px; font-weight: 600; color: var(--accent); }
+.card-amount { font-size: 15px; font-weight: 700; color: var(--green); white-space: nowrap; }
+.card-name { font-size: 13px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+.card-org { font-size: 11px; color: var(--text-muted); }
+.card-body { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+.card-section { font-size: 11.5px; color: var(--text-secondary); }
+
 .insights-link {
   display: block;
   text-align: center;
@@ -1404,10 +1417,23 @@ input:focus, select:focus, textarea:focus {
         </div>
         <div class="s-footer">
           <span class="s-deadline">Deadline: <strong>${escHtml(s.deadline)}</strong></span>
-          <button class="s-apply-btn" onclick="openApplyGuide(${i})">Apply Now →</button>
+          <button class="s-apply-btn" onclick="applyNow(${i})">Apply Now →</button>
+          <button class="s-apply-btn" style="margin-left:4px;background:#475569;font-size:11px;padding:6px 10px;" onclick="openApplyGuide(${i})">Guide</button>
         </div>`;
       grid.appendChild(card);
     });
+  }
+
+  // ── Apply Now — open URL directly, Google fallback if none ───────────────
+  function applyNow(i) {
+    const s = currentScholarships[i];
+    const safeUrl = s.applicationUrl ? escUrl(s.applicationUrl) : '#';
+    if (safeUrl !== '#') {
+      window.open(safeUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      const q = encodeURIComponent((s.title || '') + ' scholarship apply');
+      window.open('https://www.google.com/search?q=' + q, '_blank', 'noopener,noreferrer');
+    }
   }
 
   // ── Apply Guide ───────────────────────────────────────────────────────────
@@ -1430,6 +1456,14 @@ input:focus, select:focus, textarea:focus {
     const name = document.getElementById('studentName').value || 'Student';
     const major= document.getElementById('major').value || 'their field';
     const school= document.getElementById('inStateSchools').value || 'their university';
+    const urlLineHtml = (() => {
+      const safeUrl = s.applicationUrl ? escUrl(s.applicationUrl) : '#';
+      if (safeUrl !== '#') {
+        return `Review official guidelines at: <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${escHtml(s.applicationUrl)}</a>`;
+      }
+      const q = encodeURIComponent((s.title || '') + ' scholarship apply');
+      return `Find the application: <a href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener noreferrer">Search Google for &ldquo;${escHtml(s.title)}&rdquo;</a>`;
+    })();
     switchTab('apply');
     document.getElementById('apply-welcome').style.display = 'none';
     const content = document.getElementById('apply-content');
@@ -1448,7 +1482,7 @@ input:focus, select:focus, textarea:focus {
         <div class="apply-section-title"><span class="step-num">1</span> Eligibility Checklist</div>
         <ul class="checklist">
           ${(s.requirements||[]).map(r=>`<li><input type="checkbox"><span>${escHtml(r)}</span></li>`).join('')}
-          <li><input type="checkbox"><span>Review official guidelines at: <a href="${escUrl(s.applicationUrl)}" target="_blank" rel="noopener noreferrer">${escHtml(s.applicationUrl)}</a></span></li>
+          <li><input type="checkbox"><span>${urlLineHtml}</span></li>
         </ul>
       </div>
       <div class="apply-section">
@@ -1471,25 +1505,29 @@ input:focus, select:focus, textarea:focus {
           <li><input type="checkbox"><span>Contact the organization to confirm receipt</span></li>
         </ul>
       </div>
-      <button class="generate-letter-btn" onclick="generateLetter('${s.title}','${s.organization}','${name}','${major}','${school}')">
+      <button class="generate-letter-btn" onclick="generateLetter()">
         ⚡ Generate AI Cover Letter
       </button>
       <div class="letter-output" id="letter-output">
         <div class="letter-toolbar">
           <button class="letter-tool-btn" onclick="copyLetter()">Copy Text</button>
-          <button class="letter-tool-btn" onclick="regenerateLetter('${s.title}','${s.organization}','${name}','${major}','${school}')">Regenerate</button>
+          <button class="letter-tool-btn" onclick="regenerateLetter()">Regenerate</button>
           <span style="margin-left:auto;font-size:11px;color:var(--text-muted);">Edit directly below</span>
         </div>
         <textarea class="letter-edit" id="letter-text"></textarea>
       </div>`;
   }
 
-  async function generateLetter(title, org, name, major, school) {
+  async function generateLetter() {
+    const s = activeScholarship;
+    if (!s) return;
+    const title = s.title;
+    const org   = s.organization;
     const lo = document.getElementById('letter-output');
     const lt = document.getElementById('letter-text');
     lo.style.display = 'block'; lt.value = '';
     lo.scrollIntoView({behavior:'smooth'});
-    const hsName       = document.getElementById('studentName').value.trim() || name;
+    const hsName       = document.getElementById('studentName').value.trim() || 'Student';
     const hsHighschool = document.getElementById('highschool').value.trim();
     const hsGPA        = document.getElementById('gpa').value || '';
     const hsTestScore  = document.getElementById('testScore').value.trim();
@@ -1497,25 +1535,34 @@ input:focus, select:focus, textarea:focus {
     const hsAwards     = document.getElementById('awards').value.trim();
     const hsInState    = document.getElementById('inStateSchools').value.trim();
     const hsOutState   = document.getElementById('outStateSchools').value.trim();
+    const hsMajor = document.getElementById('major').value || 'their field';
     const prompt = `Write a compelling scholarship cover letter for a high school senior applying to college.
 Scholarship: ${title}
 Organization: ${org}
 Applicant: ${hsName}
 High School: ${hsHighschool||'their high school'} | GPA: ${hsGPA} (weighted)${hsTestScore?' | '+hsTestScore:''}
-Intended Major: ${major}
+Intended Major: ${hsMajor}
 Considering: ${hsInState}${hsOutState?' and '+hsOutState:''}
 Extracurriculars: ${hsActivities}
 ${hsAwards?'Awards: '+hsAwards:''}
 Identities: ${getActiveTags().join(', ')||'not specified'}
 Write 400-500 words. Hook opening (vivid personal moment), academic excellence + activities, why this scholarship resonates, college plans, strong close. First person, human voice.`;
-    const response = await apiFetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,messages:[{role:'user',content:prompt}]})});
-    const data = await response.json();
-    const text = data.content.map(b=>b.text||'').join('');
-    lt.value=''; let i=0;
-    function type(){if(i<text.length){lt.value+=text[i];i+=3;setTimeout(type,10);}} type();
+    try {
+      const response = await apiFetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,messages:[{role:'user',content:prompt}]})});
+      if (!response.ok) {
+        const errData = await response.json().catch(()=>({}));
+        throw new Error(errData.error || response.statusText);
+      }
+      const data = await response.json();
+      const text = data.content ? data.content.map(b=>b.text||'').join('') : '';
+      lt.value=''; let i=0;
+      function type(){if(i<text.length){lt.value+=text[i];i+=3;setTimeout(type,10);}} type();
+    } catch(e) {
+      lt.value = 'Error generating cover letter: ' + e.message;
+    }
   }
-  async function regenerateLetter(t,o,n,m,s){await generateLetter(t,o,n,m,s);}
+  async function regenerateLetter(){await generateLetter();}
   function copyLetter(){
     navigator.clipboard.writeText(document.getElementById('letter-text').value).then(()=>{
       const btn=event.target; btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent='Copy Text',2000);
@@ -2633,7 +2680,8 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
       document.getElementById('welcome-state').style.display = 'block';
       document.getElementById('welcome-state').innerHTML =
         '<span class="welcome-icon">⚠️</span><h2>Something went wrong</h2><p>' +
-        escHtml(scholResult.reason.message) + '</p>';
+        escHtml(scholResult.reason.message) + '</p>' +
+        '<button class="find-btn" style="max-width:220px;margin:16px auto 0;" onclick="findAll()">↺ Try Again</button>';
       return;
     }
 
