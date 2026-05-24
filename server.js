@@ -466,7 +466,7 @@ function buildTopSchoolPool(major, listedNames) {
     });
   });
 
-  const pool = available.slice(0, 15);
+  const pool = available.slice(0, 10);
   return {
     category,
     count: pool.length,
@@ -983,7 +983,7 @@ ${searchBlock}
 TASK:
 1. Assess EVERY listed school with a full admission profile (isListed: true)
 2. ${topPool
-  ? `The student has listed NO out-of-state schools. Select exactly 25 schools from the TOP RANKED ${topPool.category.toUpperCase()} PROGRAMS list in the system prompt (isListed: false). Work through the ranked list from top to bottom, picking schools where the student has a realistic chance at some tier level. Cover the full spectrum: ~5 safeties, ~10 targets, ~7 reaches, ~3 longshots. For each, write a single concise fitNote referencing the student's GPA (${gpa}), test scores (${testScore}), and home state (${homeState}). TOKEN-SAVING RULE: for isListed:false schools, use null for these fields to save space — inStateRate, admittedACTRange, edBoost, programNote, netPriceInState, tips, keyMilestones. Do NOT suggest schools already on their list.`
+  ? `The student has listed fewer than 3 out-of-state schools. From the TOP ${topPool.count} RANKED ${topPool.category.toUpperCase()} PROGRAMS pool in the system prompt, select the BEST 5 out-of-state matches for this student (isListed: false). Pick schools where the student has a realistic chance — mix of safeties, targets, and reaches. For each, write a single concise fitNote referencing their GPA (${gpa}), test scores (${testScore}), and home state (${homeState}). TOKEN-SAVING RULE: for isListed:false schools, use null for — inStateRate, admittedACTRange, edBoost, programNote, netPriceInState, tips, keyMilestones. Do NOT suggest schools already on their list.`
   : `Suggest 3–5 additional colleges NOT on their list that are strong fits (isListed: false) — include at least 1 safety, 1–2 targets. Base suggestions on GPA, scores, state, and major.`
 }
 
@@ -1038,15 +1038,15 @@ IMPORTANT JSON RULES:
 - topSpecialties: 2–3 standout specialty rankings relevant to the student's major, e.g. "Supply Chain #5, Accounting Top 15". Use null if no notable specialties
 - Every string value must be properly quoted; no extra words outside of string or number values
 ${topPool
-  ? `- TOKEN BUDGET — isListed:false schools MUST use null for: inStateRate, admittedACTRange, edBoost, programNote, netPriceInState, tips, keyMilestones. Only fill: name, location, isListed, tier, overallAcceptRate, outStateRate, admittedGPARange, admittedSATRange, universityRank, businessSchoolRank, topSpecialties, fitNote (ONE sentence, max 90 chars), netPriceOutState, applicationDeadlines (4 fields), idealStartDate, applicationUrl. Be extremely brief — all 25 must fit without truncation.`
+  ? `- TOKEN BUDGET — isListed:false schools MUST use null for: inStateRate, admittedACTRange, edBoost, programNote, netPriceInState, tips, keyMilestones. Only fill: name, location, isListed, tier, overallAcceptRate, outStateRate, admittedGPARange, admittedSATRange, universityRank, businessSchoolRank, topSpecialties, fitNote (ONE sentence, max 90 chars), netPriceOutState, applicationDeadlines (4 fields), idealStartDate, applicationUrl. Be extremely brief — all suggestions must fit without truncation.`
   : `- Keep keyMilestones to exactly 3 short items to stay within token limits`}
 - CRITICAL: The JSON array MUST be complete and valid. Never stop mid-array. If you run low on space, shorten remaining fitNote values to 1–5 words rather than truncating JSON.
 Respond ONLY with a valid JSON array — no preamble, no markdown fences.`;
 
       // Token budget reality check (pool mode):
-      // ~3 listed schools × 450 tokens (full fields) = 1,350
-      // ~15 pool schools × 250 tokens (light fields) = 3,750
-      // Total ≈ 5,100 — use 8,000 for comfortable headroom so truncation never occurs.
+      // ~5 listed schools × 450 tokens (full fields) = 2,250
+      // ~5 pool suggestions × 250 tokens (light fields) = 1,250
+      // Total ≈ 3,500 — use 8,000 for comfortable headroom.
       // Non-pool mode: up to 8 schools × 450 = 3,600 → 6,000 is sufficient.
       const collegeMaxTokens = topPool ? 8_000 : 6_000;
 
