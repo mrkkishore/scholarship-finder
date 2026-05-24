@@ -314,6 +314,15 @@ input:focus, select:focus, textarea:focus {
 }
 .find-btn:hover { background: #2563eb; }
 .find-btn:disabled { opacity: .5; cursor: not-allowed; }
+.find-btn.combined { background: linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%); font-size: 12px; padding: 12px 10px; }
+.find-btn.combined:hover { background: linear-gradient(135deg, #2563eb 0%, #6d28d9 100%); }
+.cs-college-group { margin-bottom: 20px; }
+.cs-college-header { display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border); }
+.cs-college-name { font-weight:700;font-size:14px;color:var(--text-primary); }
+.cs-tier-badge { font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase; }
+.cs-tier-badge.in-state { background:#dcfce7;color:#166534; }
+.cs-tier-badge.out-state { background:#dbeafe;color:#1e40af; }
+.cs-card-row { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px; }
 
 .insights-link {
   display: block;
@@ -978,8 +987,7 @@ input:focus, select:focus, textarea:focus {
         </div>
 
         <div class="profile-section" style="border-bottom:none;">
-          <button class="find-btn" onclick="findScholarships()">🔍 Find Scholarships</button>
-          <button class="find-btn" style="background:#7c3aed;margin-top:6px;" onclick="assessColleges()">🎓 Assess Admission Odds</button>
+          <button class="find-btn combined" onclick="findAll()">🔍 Find Scholarships &amp; Assess My Colleges</button>
           <a class="insights-link" onclick="runInsights(); return false;" href="#">View Market Insights →</a>
         </div>
       </aside>
@@ -1058,6 +1066,15 @@ input:focus, select:focus, textarea:focus {
               This tool is a discovery aid, not an authoritative source.
             </div>
             <div class="scholarship-grid" id="scholarship-grid"></div>
+
+            <div id="college-schol-section" style="display:none;margin-top:28px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <h3 style="font-size:15px;font-weight:700;color:var(--text-primary);">💰 Scholarships at Your Colleges</h3>
+                <span id="college-schol-count-badge" style="font-size:11px;color:#64748b;"></span>
+              </div>
+              <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Institutional awards, departmental scholarships, and merit grants offered directly by your listed colleges — often overlooked by applicants.</p>
+              <div id="college-schol-grid"></div>
+            </div>
           </div>
         </div>
 
@@ -2481,6 +2498,252 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
   function updateWordCount(){const text=document.getElementById('essay-textarea').value.trim();document.getElementById('essay-word-count').textContent=(text?text.split(/\s+/).length:0)+' words';}
   function copyEssay(){navigator.clipboard.writeText(document.getElementById('essay-textarea').value).then(()=>{const btn=event.target;btn.textContent='Copied ✓';setTimeout(()=>btn.textContent='Copy Text',2000);});}
   function downloadEssayTxt(){const text=document.getElementById('essay-textarea').value,name=document.getElementById('studentName').value.trim()||'essay',label=ESSAY_TYPE_LABELS[currentEssayType].replace(/[^a-zA-Z0-9]/g,'-'),blob=new Blob([text],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${name}-${label}.txt`;a.click();}
+
+  // ── Combined Action: Find Scholarships + Assess Colleges ──────────────────
+
+  function gatherProfile() {
+    return {
+      name:       document.getElementById('studentName').value.trim()     || 'the student',
+      highschool: document.getElementById('highschool').value.trim()      || 'their high school',
+      major:      document.getElementById('major').value.trim()           || 'undecided',
+      year:       document.getElementById('year').value                   || 'Senior (12th Grade)',
+      gpa:        document.getElementById('gpa').value                    || 'not specified',
+      testScore:  document.getElementById('testScore').value.trim()       || 'not provided',
+      homeState:  document.getElementById('homeState').value.trim()       || 'not specified',
+      inState:    document.getElementById('inStateSchools').value.trim()  || 'in-state universities',
+      outState:   document.getElementById('outStateSchools').value.trim() || 'none specified',
+      appType:    document.getElementById('appType').value                || 'Regular Decision',
+      needBased:  document.getElementById('needBased').value              || 'unknown',
+      interests:  document.getElementById('interests').value.trim()       || 'various activities',
+      awards:     document.getElementById('awards').value.trim(),
+      fundingGap: document.getElementById('fundingGap').value             || 'unspecified',
+      identities: getActiveTags(),
+    };
+  }
+
+  async function fetchNationalScholarships(profile) {
+    const response = await apiFetch('/api/search-scholarships', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile }),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = typeof errData.error === 'object'
+        ? (errData.error?.message || JSON.stringify(errData.error))
+        : (errData.error || response.statusText);
+      throw new Error('API error ' + response.status + ': ' + errMsg);
+    }
+    const data = await response.json();
+    if (!data.content || !Array.isArray(data.content)) throw new Error('Unexpected API response');
+    const text = data.content.map(b => b.text || '').join('');
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('No scholarship data returned — please try again');
+    const scholarships = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(scholarships) || !scholarships.length) throw new Error('Empty results — please try again');
+    return { scholarships, searchEnhanced: data.searchEnhanced, queriesSucceeded: data.queriesSucceeded };
+  }
+
+  async function fetchCollegeScholarships(profile) {
+    const response = await apiFetch('/api/college-scholarships', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile }),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = typeof errData.error === 'object'
+        ? (errData.error?.message || JSON.stringify(errData.error))
+        : (errData.error || response.statusText);
+      throw new Error(errMsg);
+    }
+    const data = await response.json();
+    if (!data.content || !Array.isArray(data.content)) throw new Error('Unexpected API response');
+    const text = data.content.map(b => b.text || '').join('');
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('No college scholarship data returned');
+    return JSON.parse(jsonMatch[0]);
+  }
+
+  async function fetchCollegeAssessment(profile) {
+    const response = await apiFetch('/api/assess-colleges', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile }),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = typeof errData.error === 'object'
+        ? (errData.error?.message || JSON.stringify(errData.error))
+        : (errData.error || response.statusText);
+      throw new Error(errMsg);
+    }
+    const data = await response.json();
+    if (!data.content || !Array.isArray(data.content)) throw new Error('Unexpected API response');
+    const text = data.content.map(b => b.text || '').join('');
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('No college data returned');
+    const colleges = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(colleges) || !colleges.length) throw new Error('Empty results');
+    return { colleges, searchEnhanced: data.searchEnhanced, topSchoolPoolUsed: data.topSchoolPoolUsed, topSchoolMajor: data.topSchoolMajor };
+  }
+
+  async function findAll() {
+    const profile = gatherProfile();
+
+    document.getElementById('welcome-state').style.display = 'none';
+    document.getElementById('results-area').style.display  = 'none';
+    document.getElementById('college-schol-section').style.display = 'none';
+    const loadingEl = document.getElementById('loading-state');
+    loadingEl.style.display = 'block';
+    switchTab('discover');
+
+    const steps = [
+      'Analyzing student profile…',
+      'Searching live scholarship databases…',
+      'Scanning underutilized opportunities…',
+      'Assessing college admission odds…',
+      'Finding institutional scholarships…',
+      'Ranking by win probability…',
+    ];
+    const stepsEl = document.getElementById('loading-steps');
+    stepsEl.innerHTML = '';
+    for (let i = 0; i < steps.length; i++) {
+      await new Promise(r => setTimeout(r, 350));
+      const li = document.createElement('li');
+      li.className = 'loading-step';
+      li.innerHTML = `<div class="step-dot active"></div> ${steps[i]}`;
+      stepsEl.appendChild(li);
+      if (i > 0) {
+        const prev = stepsEl.children[i - 1].querySelector('.step-dot');
+        prev.classList.remove('active'); prev.classList.add('done');
+      }
+    }
+
+    const [scholResult, csResult, collegeResult] = await Promise.allSettled([
+      fetchNationalScholarships(profile),
+      fetchCollegeScholarships(profile),
+      fetchCollegeAssessment(profile),
+    ]);
+
+    loadingEl.style.display = 'none';
+
+    // National scholarships are required — abort on failure
+    if (scholResult.status === 'rejected') {
+      document.getElementById('welcome-state').style.display = 'block';
+      document.getElementById('welcome-state').innerHTML =
+        '<span class="welcome-icon">⚠️</span><h2>Something went wrong</h2><p>' +
+        escHtml(scholResult.reason.message) + '</p>';
+      return;
+    }
+
+    const { scholarships, searchEnhanced, queriesSucceeded } = scholResult.value;
+    scholarships.sort((a, b) => {
+      const rA = (a.estimatedApplicants || 9999) / Math.max(a.estimatedWinners || 1, 1);
+      const rB = (b.estimatedApplicants || 9999) / Math.max(b.estimatedWinners || 1, 1);
+      return rA - rB;
+    });
+
+    const badge = document.getElementById('search-badge');
+    if (badge) {
+      if (searchEnhanced) {
+        badge.textContent = queriesSucceeded >= 3 ? '🔍 Web-enhanced' : '🔍 Partially enhanced';
+        badge.className = 'search-badge';
+      } else {
+        badge.textContent = '⚠️ AI only — verify results';
+        badge.className = 'search-badge ai-only';
+      }
+      badge.style.display = 'inline-block';
+    }
+
+    renderScholarships(scholarships);
+    await renderInsights(profile.major, profile.inState, profile.year, profile.identities, profile.homeState, profile.outState);
+
+    // College-specific scholarships (best-effort, silently skip on failure)
+    if (csResult.status === 'fulfilled') {
+      const csData = csResult.value;
+      if (Array.isArray(csData) && csData.length) {
+        renderCollegeScholarships(csData);
+      }
+    }
+
+    // College assessment (best-effort — silently populates Colleges tab)
+    if (collegeResult.status === 'fulfilled') {
+      const { colleges, searchEnhanced: cse, topSchoolPoolUsed, topSchoolMajor } = collegeResult.value;
+      // Set colleges panel state before rendering
+      document.getElementById('colleges-welcome').style.display = 'none';
+      document.getElementById('colleges-loading').style.display = 'none';
+      renderColleges(colleges, cse, topSchoolPoolUsed, topSchoolMajor);
+      // Add a "✓ Ready" badge to the Colleges tab so the user knows to check it
+      const collegesTab = document.querySelector('.tab[onclick="switchTab(\'colleges\')"]');
+      if (collegesTab && !collegesTab.querySelector('.ready-badge')) {
+        const readyBadge = document.createElement('span');
+        readyBadge.className = 'ready-badge';
+        readyBadge.style.cssText = 'background:#22c55e;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px;vertical-align:middle;';
+        readyBadge.textContent = '✓ Ready';
+        collegesTab.appendChild(readyBadge);
+      }
+    }
+  }
+
+  function renderCollegeScholarships(scholarships) {
+    const section = document.getElementById('college-schol-section');
+    const grid    = document.getElementById('college-schol-grid');
+    const badge   = document.getElementById('college-schol-count-badge');
+
+    grid.innerHTML = '';
+    const uniqueColleges = new Set(scholarships.map(s => s.college)).size;
+    badge.textContent = '(' + scholarships.length + ' scholarship' + (scholarships.length !== 1 ? 's' : '') +
+                        ' across ' + uniqueColleges + ' college' + (uniqueColleges !== 1 ? 's' : '') + ')';
+
+    // Group by college name
+    const byCollege = {};
+    scholarships.forEach(s => {
+      if (!byCollege[s.college]) byCollege[s.college] = [];
+      byCollege[s.college].push(s);
+    });
+
+    Object.entries(byCollege).forEach(([college, items]) => {
+      const tierStr   = String(items[0]?.collegeTier || '').toLowerCase();
+      const isInState = tierStr.includes('in-state') || tierStr.includes('in state');
+      const tierClass = isInState ? 'in-state' : 'out-state';
+      const tierLabel = isInState ? 'In-State' : 'Out-of-State';
+
+      const group = document.createElement('div');
+      group.className = 'cs-college-group';
+
+      const safeId = college.replace(/[^a-zA-Z0-9]/g, '_');
+      group.innerHTML = `
+        <div class="cs-college-header">
+          <span class="cs-college-name">${escHtml(college)}</span>
+          <span class="cs-tier-badge ${tierClass}">${tierLabel}</span>
+        </div>
+        <div class="cs-card-row" id="cs-row-${escHtml(safeId)}"></div>`;
+      grid.appendChild(group);
+
+      const row = group.querySelector('.cs-card-row');
+      items.forEach(s => {
+        const appUrl = s.applicationUrl ? escUrl(s.applicationUrl) : '#';
+        const card = document.createElement('div');
+        card.className = 'schol-card';
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="card-badge">${s.isUnderutilized ? '⭐ Underutilized' : '🏛️ Institutional'}</div>
+            <div class="card-amount">${escHtml(s.amount || 'Varies')}</div>
+          </div>
+          <div class="card-name">${escHtml(s.title || '')}</div>
+          <div class="card-org">${escHtml(s.organization || college)}</div>
+          <div class="card-body">${escHtml(s.description || '')}</div>
+          ${s.requirements ? `<div class="card-section"><strong>Requirements:</strong> ${escHtml(s.requirements)}</div>` : ''}
+          ${s.deadline ? `<div class="card-section"><strong>Deadline:</strong> ${escHtml(s.deadline)}</div>` : ''}
+          ${s.whyUnderutilized ? `<div class="card-section" style="color:#7c3aed;font-size:12px;"><strong>Why apply:</strong> ${escHtml(s.whyUnderutilized)}</div>` : ''}
+          ${appUrl !== '#' ? `<div style="margin-top:10px;"><a href="${appUrl}" target="_blank" rel="noopener noreferrer" class="c-apply-btn">Apply →</a></div>` : ''}`;
+        row.appendChild(card);
+      });
+    });
+
+    section.style.display = 'block';
+  }
 </script>
 </body>
 </html>

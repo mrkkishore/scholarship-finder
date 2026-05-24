@@ -29,10 +29,11 @@ The entire app is two files:
 | `POST /auth/logout` | Session | Clear cookie |
 | `POST /api/search-scholarships` | Session | Main discovery flow (see below) |
 | `POST /api/assess-colleges` | Session | College admissions assessment + AI-suggested matches |
+| `POST /api/college-scholarships` | Session | Institutional scholarships per listed college (grouped by school) |
 | `POST /api/claude` | Session | Generic Claude proxy for essays/strategy/insights |
 | `GET /*` | None | Static files from `public/` |
 
-**`public/index.html`** — Single-file SPA. All CSS (~700 lines), HTML, and JS (~800 lines) are inline. Five tabs: Discover, Apply, Insights, Strategy, Essays. Tab switching uses `switchTab(name)` which toggles `.active` on `.tab`, `.panel`, and `.nav-item` elements in parallel. All state is in the module-level `currentScholarships` array.
+**`public/index.html`** — Single-file SPA. All CSS, HTML, and JS are inline. Six tabs: Discover, Apply, Insights, Strategy, Essays, Colleges. Tab switching uses `switchTab(name)` which toggles `.active` on `.tab`, `.panel`, and `.nav-item` elements in parallel. All state is in module-level `currentScholarships` and `currentColleges` arrays. The primary action is the combined **"Find Scholarships & Assess My Colleges"** button (`findAll()`) which fires all three backend calls in parallel and populates the Discover tab (national scholarships + college-specific scholarships) and the Colleges tab (admission assessment) simultaneously.
 
 ## Main scholarship discovery flow
 
@@ -97,7 +98,7 @@ Run before every `git commit`. Checks:
 |---|---|
 | **XSS** | All AI-returned fields use `escHtml()` before `innerHTML`; URLs use `escUrl()` |
 | **Auth** | Every non-public endpoint calls `isAuthenticated(req)` before processing |
-| **Rate limits** | `/auth/login` → `isLoginRateLimited`; `/api/search-scholarships` → `isSearchRateLimited`; `/api/assess-colleges` → `isCollegeRateLimited`; `/api/claude` → `isRateLimited` |
+| **Rate limits** | `/auth/login` → `isLoginRateLimited`; `/api/search-scholarships` → `isSearchRateLimited`; `/api/assess-colleges` + `/api/college-scholarships` → `isCollegeRateLimited`; `/api/claude` → `isRateLimited` |
 | **Body size** | All `req.on("data")` handlers check against `MAX_BODY_BYTES` (32 KB) |
 | **Model lock** | Claude calls use `FORCED_MODEL` (`claude-sonnet-4-6`); `max_tokens` never exceeds `MAX_TOKENS_CAP` (6,000) |
 | **Secrets** | `.env` is in `.gitignore`; `server.log` / `server.err` are in `.gitignore`; API key is never logged |
