@@ -1609,13 +1609,13 @@ input:focus, select:focus, textarea:focus {
   ];
 
   function getCollegeApplyUrl(c) {
-    if (c.applicationUrl) {
-      const safe = escUrl(c.applicationUrl);
-      if (safe !== '#') return { url: safe, isReal: true };
-    }
     const name = (c.name || '').toLowerCase().replace(/[()]/g, ' ');
     for (const entry of COLLEGE_APPLY_URLS) {
       if (entry.keys.some(k => name.includes(k))) return { url: entry.url, isReal: true };
+    }
+    if (c.applicationUrl) {
+      const safe = escUrl(c.applicationUrl);
+      if (safe !== '#') return { url: safe, isReal: true };
     }
     const q = encodeURIComponent((c.name || '') + ' undergraduate admissions apply');
     return { url: 'https://www.google.com/search?q=' + q, isReal: false };
