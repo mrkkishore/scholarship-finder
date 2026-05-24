@@ -1035,14 +1035,17 @@ IMPORTANT JSON RULES:
 - topSpecialties: 2–3 standout specialty rankings relevant to the student's major, e.g. "Supply Chain #5, Accounting Top 15". Use null if no notable specialties
 - Every string value must be properly quoted; no extra words outside of string or number values
 ${topPool
-  ? `- TOKEN BUDGET — isListed:false schools MUST use null for: inStateRate, admittedACTRange, edBoost, programNote, netPriceInState, tips, keyMilestones. Only fill: name, location, isListed, tier, overallAcceptRate, outStateRate, admittedGPARange, admittedSATRange, universityRank, businessSchoolRank, topSpecialties, fitNote (1 sentence), netPriceOutState, applicationDeadlines (4 fields), idealStartDate, applicationUrl. This keeps each entry short so all 25 fit in one response.`
+  ? `- TOKEN BUDGET — isListed:false schools MUST use null for: inStateRate, admittedACTRange, edBoost, programNote, netPriceInState, tips, keyMilestones. Only fill: name, location, isListed, tier, overallAcceptRate, outStateRate, admittedGPARange, admittedSATRange, universityRank, businessSchoolRank, topSpecialties, fitNote (ONE sentence, max 90 chars), netPriceOutState, applicationDeadlines (4 fields), idealStartDate, applicationUrl. Be extremely brief — all 25 must fit without truncation.`
   : `- Keep keyMilestones to exactly 3 short items to stay within token limits`}
+- CRITICAL: The JSON array MUST be complete and valid. Never stop mid-array. If you run low on space, shorten remaining fitNote values to 1–5 words rather than truncating JSON.
 Respond ONLY with a valid JSON array — no preamble, no markdown fences.`;
 
-      // When returning 25 pool suggestions + listed schools, token needs are higher.
-      // Base (listed schools only): ~350 tokens each. Pool mode (25 lighter cards): ~150 each.
-      // 3 listed × 350 + 25 pool × 150 ≈ 4,800 — use 8,000 headroom to avoid truncation.
-      const collegeMaxTokens = topPool ? 8_000 : 6_000;
+      // Token budget reality check (pool mode):
+      // ~3 listed schools × 450 tokens (full fields) = 1,350
+      // ~25 pool schools × 250 tokens (light fields) = 6,250
+      // Total ≈ 7,600 — use 12,000 for comfortable headroom so truncation never occurs.
+      // Non-pool mode: up to 8 schools × 450 = 3,600 → 6,000 is sufficient.
+      const collegeMaxTokens = topPool ? 12_000 : 6_000;
 
       const claudePayload = JSON.stringify({
         model:      FORCED_MODEL,
