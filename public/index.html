@@ -1381,6 +1381,8 @@ input:focus, select:focus, textarea:focus {
     populateApplyPickList(scholarships);
 
     scholarships.forEach((s, i) => {
+      const rawScholarUrl = s.applicationUrl || s.applyUrl || s.url || s.website || '';
+      const hasRealUrl    = !!(rawScholarUrl && escUrl(rawScholarUrl) !== '#');
       const applicants = s.estimatedApplicants || null;
       const winners    = s.estimatedWinners    || null;
       const ratio      = (applicants && winners) ? Math.round(applicants/winners) : null;
@@ -1417,21 +1419,59 @@ input:focus, select:focus, textarea:focus {
         </div>
         <div class="s-footer">
           <span class="s-deadline">Deadline: <strong>${escHtml(s.deadline)}</strong></span>
-          <button class="s-apply-btn" onclick="applyNow(${i})">Apply Now →</button>
+          <button class="s-apply-btn" onclick="applyNow(${i})">${hasRealUrl ? '🔗' : '🔍'} Apply Now →</button>
           <button class="s-apply-btn" style="margin-left:4px;background:#475569;font-size:11px;padding:6px 10px;" onclick="openApplyGuide(${i})">Guide</button>
         </div>`;
       grid.appendChild(card);
     });
   }
 
+  // ── College apply URL lookup (hardcoded for common schools, Google fallback for rest) ──
+  const COLLEGE_APPLY_URLS = [
+    { keys: ['ut austin', 'texas at austin', 'utexas'],          url: 'https://admissions.utexas.edu/apply' },
+    { keys: ['texas a&m', 'texas a and m', 'tamu', 'aggies'],    url: 'https://admissions.tamu.edu/apply' },
+    { keys: ['ut dallas', 'utd', 'texas at dallas', 'jindal'],   url: 'https://enroll.utdallas.edu/apply/' },
+    { keys: ['nyu', 'new york university'],                       url: 'https://www.nyu.edu/admissions/undergraduate-admissions/how-to-apply.html' },
+    { keys: ['ucla', 'california, los angeles'],                  url: 'https://admission.ucla.edu/apply' },
+    { keys: ['university of michigan', 'umich', 'ann arbor'],    url: 'https://admissions.umich.edu/apply' },
+    { keys: ['harvard university', 'harvard college'],            url: 'https://college.harvard.edu/admissions/apply' },
+    { keys: ['mit', 'massachusetts institute of technology'],     url: 'https://apply.mit.edu' },
+    { keys: ['stanford university'],                              url: 'https://admission.stanford.edu/apply/' },
+    { keys: ['yale university'],                                  url: 'https://admissions.yale.edu/applying' },
+    { keys: ['princeton university'],                             url: 'https://admission.princeton.edu/apply' },
+    { keys: ['columbia university'],                              url: 'https://undergrad.admissions.columbia.edu/apply' },
+    { keys: ['uc berkeley', 'university of california, berkeley'], url: 'https://admissions.berkeley.edu/apply' },
+    { keys: ['carnegie mellon'],                                  url: 'https://admission.enrollment.cmu.edu/pages/undergraduate-first-year' },
+    { keys: ['georgia tech', 'georgia institute'],               url: 'https://admission.gatech.edu/first-year/apply' },
+    { keys: ['purdue university'],                               url: 'https://www.admissions.purdue.edu/apply/' },
+    { keys: ['rice university'],                                 url: 'https://admission.rice.edu/apply' },
+    { keys: ['university of texas at san antonio', 'utsa'],      url: 'https://www.utsa.edu/apply/' },
+    { keys: ['texas tech'],                                      url: 'https://www.depts.ttu.edu/admissions/freshmen/apply.php' },
+    { keys: ['baylor university'],                               url: 'https://www.baylor.edu/admissions/index.php' },
+  ];
+
+  function getCollegeApplyUrl(c) {
+    if (c.applicationUrl) {
+      const safe = escUrl(c.applicationUrl);
+      if (safe !== '#') return { url: safe, isReal: true };
+    }
+    const name = (c.name || '').toLowerCase().replace(/[()]/g, ' ');
+    for (const entry of COLLEGE_APPLY_URLS) {
+      if (entry.keys.some(k => name.includes(k))) return { url: entry.url, isReal: true };
+    }
+    const q = encodeURIComponent((c.name || '') + ' undergraduate admissions apply');
+    return { url: 'https://www.google.com/search?q=' + q, isReal: false };
+  }
+
   // ── Apply Now — open URL directly, Google fallback if none ───────────────
   function applyNow(i) {
     const s = currentScholarships[i];
-    const safeUrl = s.applicationUrl ? escUrl(s.applicationUrl) : '#';
+    const rawUrl = s.applicationUrl || s.applyUrl || s.url || s.website || '';
+    const safeUrl = rawUrl ? escUrl(rawUrl) : '#';
     if (safeUrl !== '#') {
       window.open(safeUrl, '_blank', 'noopener,noreferrer');
     } else {
-      const q = encodeURIComponent((s.title || '') + ' scholarship apply');
+      const q = encodeURIComponent((s.title || '') + ' scholarship apply ' + new Date().getFullYear());
       window.open('https://www.google.com/search?q=' + q, '_blank', 'noopener,noreferrer');
     }
   }
@@ -2104,8 +2144,8 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
     };
 
     function buildCard(c) {
-      const tier    = c.tier || 'target';
-      const safeUrl = c.applicationUrl ? escUrl(c.applicationUrl) : null;
+      const tier     = c.tier || 'target';
+      const colApply = getCollegeApplyUrl(c);
 
       // ── Build deadline grid ─────────────────────────────────────────────
       const dl = c.applicationDeadlines || {};
@@ -2199,7 +2239,7 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
 
           <div class="c-footer">
             <div class="c-price">${priceNoteEsc}</div>
-            ${safeUrl && safeUrl !== '#' ? `<a class="c-apply-btn" href="${safeUrl}" target="_blank" rel="noopener noreferrer">Apply →</a>` : ''}
+            <a class="c-apply-btn" href="${colApply.url}" target="_blank" rel="noopener noreferrer">${colApply.isReal ? '🔗 Apply' : '🔍 Find Application'}</a>
           </div>
         </div>`;
     }
@@ -2771,7 +2811,14 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
 
       const row = group.querySelector('.cs-card-row');
       items.forEach(s => {
-        const appUrl = s.applicationUrl ? escUrl(s.applicationUrl) : '#';
+        const csRawUrl  = s.applicationUrl || s.applyUrl || s.url || s.website || '';
+        const csAppUrl  = csRawUrl ? escUrl(csRawUrl) : '#';
+        const csIsReal  = csAppUrl !== '#';
+        const csFallUrl = (() => {
+          const q = encodeURIComponent((s.title || '') + ' ' + college + ' scholarship apply');
+          return 'https://www.google.com/search?q=' + q;
+        })();
+        const csHref    = csIsReal ? csAppUrl : csFallUrl;
         const card = document.createElement('div');
         card.className = 'schol-card';
         card.innerHTML = `
@@ -2782,10 +2829,10 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
           <div class="card-name">${escHtml(s.title || '')}</div>
           <div class="card-org">${escHtml(s.organization || college)}</div>
           <div class="card-body">${escHtml(s.description || '')}</div>
-          ${s.requirements ? `<div class="card-section"><strong>Requirements:</strong> ${escHtml(s.requirements)}</div>` : ''}
+          ${s.requirements ? `<div class="card-section"><strong>Requirements:</strong> ${escHtml(Array.isArray(s.requirements) ? s.requirements.join(', ') : s.requirements)}</div>` : ''}
           ${s.deadline ? `<div class="card-section"><strong>Deadline:</strong> ${escHtml(s.deadline)}</div>` : ''}
           ${s.whyUnderutilized ? `<div class="card-section" style="color:#7c3aed;font-size:12px;"><strong>Why apply:</strong> ${escHtml(s.whyUnderutilized)}</div>` : ''}
-          ${appUrl !== '#' ? `<div style="margin-top:10px;"><a href="${appUrl}" target="_blank" rel="noopener noreferrer" class="c-apply-btn">Apply →</a></div>` : ''}`;
+          <div style="margin-top:10px;"><a href="${csHref}" target="_blank" rel="noopener noreferrer" class="c-apply-btn">${csIsReal ? '🔗 Apply →' : '🔍 Find →'}</a></div>`;
         row.appendChild(card);
       });
     });
