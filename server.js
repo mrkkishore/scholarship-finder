@@ -851,6 +851,7 @@ const MIME = {
   ".json": "application/json",
   ".png":  "image/png",
   ".ico":  "image/x-icon",
+  ".pdf":  "application/pdf",
 };
 
 // ── Security headers helper ───────────────────────────────────────────────────
@@ -1931,7 +1932,12 @@ Respond ONLY with a valid JSON array — no preamble, no markdown fences.`;
       res.end("<h2>404 — Not Found</h2>");
       return;
     }
-    res.writeHead(200, { "Content-Type": MIME[ext] || "text/plain" });
+    const headers = { "Content-Type": MIME[ext] || "text/plain" };
+    if (ext === ".pdf") {
+      // Force a download (rather than inline view) for PDF assets.
+      headers["Content-Disposition"] = `attachment; filename="${path.basename(filePath)}"`;
+    }
+    res.writeHead(200, headers);
     res.end(data);
   });
 });

@@ -14,6 +14,11 @@ server.err
 # Guardrail JSONL logs (eligibility drops, redirect tracking)
 logs/
 
+# Local-only PDF download copy — kept out of git so it is NOT served
+# unauthenticated on the deployed site (static files have no auth).
+# The source doc lives at repo root (TECHNICAL_OVERVIEW.pdf).
+public/TECHNICAL_OVERVIEW.pdf
+
 # OS
 .DS_Store
 Thumbs.db
