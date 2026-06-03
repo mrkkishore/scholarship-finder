@@ -3,6 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const https  = require("https");
 const crypto = require("crypto");
+const net = require("net");
+const dns = require("dns").promises;
 
 // ── Load .env ──────────────────────────────────────────────────────────────────
 function loadEnv() {
@@ -386,20 +388,80 @@ async function mapLimit(items, limit, fn) {
 const URL_HEALTH_TTL_MS = 24 * 60 * 60 * 1000;   // 24h, per spec
 const urlHealthCache    = new Map();             // url -> { httpStatus, redirected, final_url, checked_at }
 
-// One fetch attempt with an abort-based timeout. Follows redirects so we can
-// read the final URL. Returns { status, redirected, finalUrl }.
-async function fetchStatus(url, method, timeoutMs) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      method,
-      redirect: "follow",
-      signal:   ctrl.signal,
-      headers:  { "User-Agent": "Mozilla/5.0 (compatible; ScholarshipFinder/1.0)" },
-    });
-    return { status: res.status, redirected: res.redirected, finalUrl: res.url };
-  } finally { clearTimeout(timer); }
+// ── SSRF protection ─────────────────────────────────────────────────────────
+// G1 fetches URLs that originate from untrusted LLM/Tavily output. Without a
+// guard the server could be steered into requesting internal hosts (cloud
+// metadata, localhost services, private ranges). We resolve each host and
+// refuse any request whose target is not a public IP — re-checked on EVERY
+// redirect hop (defends against DNS rebinding + redirect-to-internal).
+function isPrivateIPv4(ip) {
+  const p = ip.split(".").map(Number);
+  if (p.length !== 4 || p.some(n => Number.isNaN(n) || n < 0 || n > 255)) return true;
+  const [a, b] = p;
+  if (a === 0)   return true;                       // 0.0.0.0/8 "this host"
+  if (a === 10)  return true;                       // private
+  if (a === 127) return true;                       // loopback
+  if (a === 169 && b === 254) return true;          // link-local + cloud metadata
+  if (a === 172 && b >= 16 && b <= 31) return true; // private
+  if (a === 192 && b === 168) return true;          // private
+  if (a === 100 && b >= 64 && b <= 127) return true;// CGNAT
+  if (a >= 224) return true;                        // multicast / reserved
+  return false;
+}
+function isPrivateIp(ip) {
+  if (net.isIPv4(ip)) return isPrivateIPv4(ip);
+  if (net.isIPv6(ip)) {
+    const low = ip.toLowerCase().replace(/^\[|\]$/g, "");
+    if (low === "::1" || low === "::") return true;                 // loopback / unspecified
+    if (/^(fe8|fe9|fea|feb)/.test(low)) return true;                // fe80::/10 link-local
+    if (/^f[cd]/.test(low)) return true;                            // fc00::/7 unique-local
+    const m = low.match(/(?:::ffff:)(\d+\.\d+\.\d+\.\d+)$/);        // IPv4-mapped
+    if (m) return isPrivateIPv4(m[1]);
+    return false;
+  }
+  return true;                                      // unparseable → treat as unsafe
+}
+async function isHostPublic(hostname) {
+  if (!hostname) return false;
+  if (net.isIP(hostname)) return !isPrivateIp(hostname);
+  let addrs;
+  try { addrs = await dns.lookup(hostname, { all: true }); }
+  catch { return false; }                           // unresolvable → don't fetch
+  if (!addrs.length) return false;
+  return addrs.every(a => !isPrivateIp(a.address)); // block if ANY address is private
+}
+
+// One liveness attempt with an abort-based timeout. Follows redirects MANUALLY
+// (max 5 hops), validating the host of every hop. Returns { status, redirected,
+// finalUrl } or { blocked: true } if any hop targets a non-public address.
+async function fetchStatus(startUrl, method, timeoutMs) {
+  let url = startUrl, redirected = false;
+  for (let hop = 0; hop < 5; hop++) {
+    let host;
+    try { host = new URL(url).hostname; } catch { return { blocked: true }; }
+    if (!(await isHostPublic(host))) return { blocked: true };
+
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    let res;
+    try {
+      res = await fetch(url, {
+        method,
+        redirect: "manual",
+        signal:   ctrl.signal,
+        headers:  { "User-Agent": "Mozilla/5.0 (compatible; ScholarshipFinder/1.0)" },
+      });
+    } finally { clearTimeout(timer); }
+
+    const loc = res.headers.get("location");
+    if (res.status >= 300 && res.status < 400 && loc) {
+      url = new URL(loc, url).toString();           // resolve relative redirects
+      redirected = true;
+      continue;                                     // re-validate host at loop top
+    }
+    return { status: res.status, redirected, finalUrl: url };
+  }
+  return { status: 0, redirected: true, finalUrl: url };   // too many redirects → dead
 }
 
 // Turn a raw cache record into the client-facing { url_status, final_url }.
@@ -438,15 +500,19 @@ async function checkUrlHealth(rawUrl, { strict = false } = {}) {
     return classifyUrlHealth(url, rec, strict);
   }
 
+  const toRec = (r) => r.blocked
+    ? { httpStatus: 0, redirected: false, final_url: url, checked_at: Date.now() }   // SSRF-blocked → dead
+    : { httpStatus: r.status, redirected: r.redirected, final_url: r.finalUrl || url, checked_at: Date.now() };
+
   let rec;
   try {
     let r = await fetchStatus(url, "HEAD", 5000);
-    if (r.status >= 400) r = await fetchStatus(url, "GET", 5000);   // some servers reject HEAD
-    rec = { httpStatus: r.status, redirected: r.redirected, final_url: r.finalUrl || url, checked_at: Date.now() };
+    if (!r.blocked && r.status >= 400) r = await fetchStatus(url, "GET", 5000);   // some servers reject HEAD
+    rec = toRec(r);
   } catch (_) {
     try {
       const r = await fetchStatus(url, "GET", 5000);                // HEAD threw/timed out
-      rec = { httpStatus: r.status, redirected: r.redirected, final_url: r.finalUrl || url, checked_at: Date.now() };
+      rec = toRec(r);
     } catch (_) {
       rec = { httpStatus: 0, redirected: false, final_url: url, checked_at: Date.now() };
     }
