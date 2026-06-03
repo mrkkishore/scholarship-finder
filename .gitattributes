@@ -1,0 +1,5 @@
+# Treat binary assets as binary — never apply EOL conversion (would corrupt them)
+*.pdf binary
+*.png binary
+*.jpg binary
+*.ico binary

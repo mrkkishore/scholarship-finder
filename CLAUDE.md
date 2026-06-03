@@ -63,7 +63,7 @@ The frontend parses Claude's JSON out of `data.content[0].text` using a regex (`
 **Authentication:** Session tokens identify human actors — not the `X-Actor-Id` header (removed; treat any code reading it as legacy). Machine clients use `X-API-Key` and get a synthetic `machine:ops` / `machine:admin` identity. Machines cannot approve rules in four-eyes contexts.
 
 All of the following are enforced server-side and cannot be bypassed by the client:
-- Model is hardcoded to `claude-sonnet-4-6`; `max_tokens` is capped at 6,000 (12,000 for college pool mode — 25 suggested schools require more headroom)
+- Model is hardcoded to `claude-sonnet-4-6`; `max_tokens` is capped at 6,000 (8,000 for college pool mode — the suggested-school pool needs more headroom). See `collegeMaxTokens` in `server.js`.
 - Rate limits: 10 req/min on `/api/claude`, 3 req/min on `/api/search-scholarships`
 - Daily token budget and daily Tavily call budget tracked in-memory (reset at midnight)
 - Session tokens are 64-char hex, stored in-memory with 24h TTL
@@ -116,7 +116,7 @@ Run before every `git commit`. Checks:
 | **Auth** | Every non-public endpoint calls `isAuthenticated(req)` before processing |
 | **Rate limits** | `/auth/login` → `isLoginRateLimited`; `/api/search-scholarships` → `isSearchRateLimited`; `/api/assess-colleges` + `/api/college-scholarships` → `isCollegeRateLimited`; `/api/claude` → `isRateLimited` |
 | **Body size** | All `req.on("data")` handlers check against `MAX_BODY_BYTES` (32 KB) |
-| **Model lock** | Claude calls use `FORCED_MODEL` (`claude-sonnet-4-6`); `/api/claude` capped at `MAX_TOKENS_CAP` (6,000); `/api/assess-colleges` uses `collegeMaxTokens` (6,000 normal / 12,000 pool mode) |
+| **Model lock** | Claude calls use `FORCED_MODEL` (`claude-sonnet-4-6`); `/api/claude` capped at `MAX_TOKENS_CAP` (6,000); `/api/assess-colleges` uses `collegeMaxTokens` (6,000 normal / 8,000 pool mode); deadline-extraction call capped at 2,000 |
 | **Secrets** | `.env` is in `.gitignore`; `server.log` / `server.err` are in `.gitignore`; API key is never logged |
 | **Prompt injection** | Tavily results are sanitized with `INJECTION_RE` before reaching Claude; `<SEARCH_RESULTS>` / `<COLLEGE_SEARCH_DATA>` / `<COLLEGE_DEADLINE_DATA>` blocks are labeled untrusted; college names sanitized in `parseCollegeList()` |
 | **SSRF (URL liveness)** | `checkUrlHealth` fetches LLM/Tavily-supplied URLs. Confirm `isHostPublic()` runs before **every** redirect hop and rejects private/loopback/link-local/metadata IPs; redirects are `manual` (never `redirect: "follow"`); blocked targets → `dead` |
