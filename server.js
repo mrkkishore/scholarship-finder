@@ -793,7 +793,7 @@ Respond ONLY with a valid JSON array — no preamble, no markdown.
 
       const claudePayload = JSON.stringify({
         model:      FORCED_MODEL,
-        max_tokens: 4_000,
+        max_tokens: 6_000,
         system:     systemPrompt,
         messages:   [{ role: "user", content: userPrompt }],
       });
@@ -1245,7 +1245,7 @@ Respond ONLY with a valid JSON array — no preamble, no markdown fences.`;
 
       const claudePayload = JSON.stringify({
         model:      FORCED_MODEL,
-        max_tokens: 4_000,
+        max_tokens: 6_000,
         system:     systemPrompt,
         messages:   [{ role: "user", content: userPrompt }],
       });
