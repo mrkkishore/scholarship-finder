@@ -354,33 +354,6 @@ input:focus, select:focus, textarea:focus {
   overflow: hidden;
 }
 
-/* ── TAB BAR ─────────────────────────────────────────────────────────────── */
-.tab-bar {
-  display: flex;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border);
-  padding: 0 20px;
-  gap: 0;
-  flex-shrink: 0;
-}
-.tab {
-  font-size: 12.5px;
-  font-weight: 500;
-  padding: 12px 16px;
-  cursor: pointer;
-  color: var(--text-muted);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color .15s;
-  white-space: nowrap;
-  background: none;
-  border-top: none;
-  border-left: none;
-  border-right: none;
-}
-.tab:hover { color: var(--text-primary); }
-.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
-
 /* ── PANELS ──────────────────────────────────────────────────────────────── */
 .panel { display: none; padding: 20px 24px; flex: 1; overflow-y: auto; }
 .panel.active { display: block; }
@@ -590,7 +563,8 @@ input:focus, select:focus, textarea:focus {
 .chat-header { background: var(--sidebar-bg); color: #fff; padding: 12px 18px; margin: -20px -24px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--accent); }
 .chat-header-title { font-size: 12px; font-weight: 600; letter-spacing: .05em; }
 .chat-header-actions { display: flex; gap: 6px; }
-.chat-messages { flex: 1; overflow-y: auto; padding: 16px 0; display: flex; flex-direction: column; gap: 12px; }
+.strategy-body { display: flex; flex-direction: row; flex: 1; min-height: 0; gap: 0; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; border-right: 1px solid var(--border); }
 .chat-bubble { max-width: 85%; padding: 12px 14px; border-radius: var(--radius); font-size: 13px; line-height: 1.6; }
 .chat-bubble.assistant { background: var(--card-bg); border: 1px solid var(--border); align-self: flex-start; box-shadow: var(--shadow); }
 .chat-bubble.user { background: var(--accent); color: #fff; align-self: flex-end; }
@@ -606,10 +580,16 @@ input:focus, select:focus, textarea:focus {
 .chat-bubble.assistant .tier-1 { color: var(--red); font-weight: 700; }
 .chat-bubble.assistant .tier-2 { color: var(--yellow); font-weight: 600; }
 .chat-bubble.assistant .tier-3 { color: var(--text-muted); }
-.chat-input-area { display: flex; gap: 8px; padding: 12px 0 0; border-top: 1px solid var(--border); }
-.chat-input-area textarea { flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 9px 12px; font-family: 'Inter',sans-serif; font-size: 13px; resize: none; height: 52px; background: var(--card-bg); }
-.chat-input-area textarea:focus { outline: none; border-color: var(--accent); }
-.chat-send-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 0 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s; white-space: nowrap; }
+.chat-input-area { flex: 0 0 50%; display: flex; flex-direction: column; gap: 8px; padding: 20px; overflow-y: auto; border-top: none; margin: 0; max-width: none; width: auto; }
+.chat-input-label { font-size: 14px; font-weight: 600; color: #111111; margin-bottom: 2px; }
+.chat-input-area textarea { width: 100%; box-sizing: border-box; border: 1px solid #cccccc; border-radius: 8px; padding: 18px; font-family: system-ui, -apple-system, 'Inter', sans-serif; font-size: 15px; line-height: 1.6; color: #333330; resize: vertical; flex: 1; min-height: 0; background: #ffffff; transition: border-color 150ms ease, box-shadow 150ms ease; }
+.chat-input-area textarea::placeholder { color: #999990; }
+.chat-input-area textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+.chat-input-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; font-size: 12px; line-height: 1.5; }
+.chat-input-help { color: #666660; flex: 1; }
+.chat-input-counter { color: #666660; font-family: 'JetBrains Mono', monospace; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.chat-input-hint { font-size: 11px; color: #999990; margin-top: 2px; }
+.chat-send-btn { align-self: flex-end; margin-top: 8px; background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 12px 28px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s; white-space: nowrap; }
 .chat-send-btn:hover { background: #2563eb; }
 .chat-send-btn:disabled { opacity: .4; cursor: not-allowed; }
 .chat-typing { display: flex; gap: 5px; align-items: center; padding: 10px; }
@@ -689,6 +669,9 @@ input:focus, select:focus, textarea:focus {
   .feature-grid { grid-template-columns: 1fr 1fr; }
   .essays-layout { grid-template-columns: 1fr; height: auto; }
   .strategy-chat { height: auto; min-height: 400px; }
+  .strategy-body { flex-direction: column; }
+  .chat-messages { border-right: none; border-bottom: 1px solid var(--border); min-height: 200px; }
+  .chat-input-area { flex: none; padding: 16px; }
 }
 
 /* ── MOBILE (≤ 768px) ─────────────────────────────────────────────────────── */
@@ -736,11 +719,6 @@ input:focus, select:focus, textarea:focus {
   .profile-toggle-arrow { font-size: 10px; transition: transform .2s; }
   .profile-toggle-bar.collapsed .profile-toggle-arrow { transform: rotate(-90deg); }
 
-  /* Tab bar — scrollable */
-  .tab-bar { overflow-x: auto; padding: 0 6px; -webkit-overflow-scrolling: touch; }
-  .tab-bar::-webkit-scrollbar { display: none; }
-  .tab { padding: 10px 10px; font-size: 11.5px; white-space: nowrap; }
-
   /* Panels */
   .panel { padding: 14px 12px; }
 
@@ -772,8 +750,11 @@ input:focus, select:focus, textarea:focus {
   .apply-header { margin: -14px -12px 14px; padding: 12px 14px; flex-wrap: wrap; gap: 10px; }
 
   /* Strategy chat */
-  .strategy-chat { height: calc(100vh - 180px); min-height: 360px; }
-  .chat-input-area textarea { height: 46px; font-size: 13px; }
+  .strategy-chat { height: auto; min-height: 360px; }
+  .strategy-body { flex-direction: column; }
+  .chat-messages { border-right: none; border-bottom: 1px solid var(--border); min-height: 180px; }
+  .chat-input-area { flex: none; }
+  .chat-input-area textarea { min-height: 120px; font-size: 13px; }
 
   /* Essays */
   .essays-layout { grid-template-columns: 1fr; height: auto; margin: -14px -12px; }
@@ -990,6 +971,566 @@ input:focus, select:focus, textarea:focus {
   border-radius: 20px; padding: 3px 10px; white-space: nowrap;
 }
 .search-badge.ai-only { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+
+/* ═════════════════════════════════════════════════════════════════════════
+ * REDESIGN PORT — additive tokens + new components.
+ * All new selectors are namespaced (`rd-*`, `hero__*`, `category-*`, `list-item`,
+ * `meta-chip`, `status-pill`, `cta-link`). Existing selectors are not touched.
+ * Dark sidebar palette is preserved.
+ * ═════════════════════════════════════════════════════════════════════════ */
+:root {
+  --rd-bg-app:        #f6f7f8;
+  --rd-bg-surface:    #ffffff;
+  --rd-bg-muted:      #f5f5f0;
+  --rd-bg-hero:       #fafaf7;
+  --rd-border:        #e5e7eb;
+  --rd-border-strong: #d1d5db;
+  --rd-text-primary:  #111111;
+  --rd-text-body:     #333330;
+  --rd-text-muted:    #666660;
+  --rd-text-subtle:   #9ca3af;
+
+  --rd-safety:   #10b981;
+  --rd-target:   #6366f1;
+  --rd-reach:    #f59e0b;
+  --rd-longshot: #f43f5e;
+  --rd-accent:   #6366f1;
+
+  --rd-radius-card: 14px;
+  --rd-radius-pill: 999px;
+  --rd-shadow-hover: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+.hero {
+  background: var(--rd-bg-hero);
+  border: 1px solid var(--rd-border);
+  border-radius: 20px;
+  padding: 48px;
+  margin-bottom: 28px;
+}
+.hero__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 36px;
+  align-items: center;
+}
+.hero__eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--rd-text-muted);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.hero__title {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--rd-text-primary);
+  margin: 0 0 16px;
+  letter-spacing: -0.02em;
+}
+.hero__title--accent { color: var(--rd-accent); }
+.hero__subtitle {
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--rd-text-body);
+  max-width: 56ch;
+  margin: 0 0 24px;
+}
+.hero__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
+.btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 12px 22px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background .15s, border-color .15s, color .15s, box-shadow .15s, transform .05s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
+.btn:active { transform: translateY(1px); }
+.btn--primary { background: var(--rd-accent); color: #fff; }
+.btn--primary:hover { background: #4f46e5; }
+.btn--ghost { background: var(--rd-bg-surface); color: var(--rd-text-primary); border-color: var(--rd-border-strong); }
+.btn--ghost:hover { border-color: var(--rd-text-primary); }
+.hero__stats { display: flex; gap: 28px; flex-wrap: wrap; }
+.hero__stat { display: flex; flex-direction: column; gap: 4px; }
+.hero__stat strong { font-size: 26px; font-weight: 700; color: var(--rd-text-primary); line-height: 1; }
+.hero__stat span { font-size: 12px; color: var(--rd-text-muted); }
+.hero__visual {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(99,102,241,0.10), transparent 60%),
+    radial-gradient(circle at 70% 70%, rgba(245,158,11,0.10), transparent 60%);
+  border-radius: 16px;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero__visual::before,
+.hero__visual::after {
+  content: '';
+  position: absolute;
+  width: 160px;
+  height: 200px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--rd-border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+}
+.hero__visual::before { transform: translate(-22px, -8px) rotate(-8deg); background: linear-gradient(180deg, #ffffff 50%, #f5f3ff 100%); }
+.hero__visual::after  { transform: translate( 22px,  8px) rotate( 6deg); background: linear-gradient(180deg, #ffffff 50%, #fef3c7 100%); }
+
+@media (max-width: 1024px) {
+  .hero { padding: 32px; }
+  .hero__inner { grid-template-columns: 1fr; }
+  .hero__visual { min-height: 160px; order: -1; }
+  .hero__title { font-size: 34px; }
+}
+@media (max-width: 768px) {
+  .hero { padding: 24px; border-radius: 14px; }
+  .hero__title { font-size: 28px; }
+  .hero__subtitle { font-size: 15px; }
+  .hero__stats { gap: 16px; }
+  .hero__stat strong { font-size: 22px; }
+}
+
+/* ── Category flow ────────────────────────────────────────────────────── */
+.category-flow { margin: 0 0 20px; }
+.category-flow__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--rd-text-muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.category-flow__scroller {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 24px 8px 0;
+  position: relative;
+  scrollbar-width: thin;
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+}
+.category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--rd-bg-surface);
+  border: 1px solid var(--rd-border);
+  border-radius: var(--rd-radius-pill);
+  padding: 10px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rd-text-body);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.category-pill:hover { border-color: var(--rd-border-strong); }
+.category-pill:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
+.category-pill__icon { font-size: 14px; }
+.category-pill__count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--rd-text-muted);
+  background: var(--rd-bg-muted);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.category-pill.is-active {
+  background: rgba(99, 102, 241, 0.10);
+  border-color: rgba(99, 102, 241, 0.30);
+  color: var(--rd-accent);
+}
+.category-pill.is-active .category-pill__count {
+  background: rgba(99, 102, 241, 0.18);
+  color: var(--rd-accent);
+}
+
+/* ── Scholarship rd-card (richer reference layout) ────────────────────── */
+.scholarship-grid.rd-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 14px; }
+.rd-card {
+  display: flex; flex-direction: column;
+  background: var(--rd-bg-surface);
+  border: 1px solid var(--rd-border);
+  border-left: 4px solid var(--rd-border-strong);
+  border-radius: var(--rd-radius-card);
+  padding: 18px 20px 16px;
+  transition: border-color .15s, box-shadow .15s, transform .05s;
+  gap: 12px;
+}
+.rd-card:hover { box-shadow: var(--rd-shadow-hover); }
+.rd-card[data-scope="in-state"]     { border-left-color: var(--rd-safety); }
+.rd-card[data-scope="national"]     { border-left-color: var(--rd-accent); }
+.rd-card[data-scope="out-of-state"] { border-left-color: var(--rd-reach); }
+
+.rd-card__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+.rd-card__title-block { min-width: 0; flex: 1; }
+.rd-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--rd-text-primary);
+  margin: 0 0 4px;
+  line-height: 1.3;
+  word-break: break-word;
+}
+.rd-card__org { font-size: 12.5px; color: var(--rd-text-muted); }
+.rd-card__amount-block { text-align: right; flex-shrink: 0; }
+.rd-card__amount { font-size: 22px; font-weight: 700; color: var(--rd-safety); line-height: 1; }
+.rd-card__renewable {
+  margin-top: 6px;
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: rgba(16,185,129,0.10);
+  color: #047857;
+  border: 1px solid rgba(16,185,129,0.30);
+  border-radius: var(--rd-radius-pill);
+  padding: 2px 8px;
+}
+
+.rd-card__badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.rd-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: var(--rd-radius-pill);
+  padding: 3px 10px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.rd-badge--scope-in-state     { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+.rd-badge--scope-national     { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.rd-badge--scope-out-of-state { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.rd-badge--underused          { background: rgba(245,158,11,0.10); color: #92400e; border-color: rgba(245,158,11,0.35); }
+.rd-badge--no-essay           { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.rd-badge--essay              { background: #f3f4f6; color: var(--rd-text-body); border-color: var(--rd-border); }
+.rd-badge--nomination         { background: rgba(99,102,241,0.10); color: #3730a3; border-color: rgba(99,102,241,0.30); }
+
+.rd-card__desc {
+  font-size: 13px;
+  color: var(--rd-text-body);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rd-card__overlooked {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #78350f;
+}
+.rd-card__overlooked strong { color: #92400e; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; }
+
+.rd-card__odds { margin-top: 2px; }
+.rd-card__odds-stats { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; margin-bottom: 6px; }
+.rd-card__odds-label { font-weight: 700; color: var(--rd-safety); }
+.rd-card__odds-label--mid { color: #b45309; }
+.rd-card__odds-label--low { color: #b91c1c; }
+.rd-card__odds-count { color: var(--rd-text-muted); }
+.rd-card__odds-track { height: 6px; background: var(--rd-bg-muted); border-radius: 999px; overflow: hidden; }
+.rd-card__odds-fill { height: 100%; background: var(--rd-safety); border-radius: 999px; transition: width .25s; }
+
+.rd-card__details {
+  border-top: 1px solid var(--rd-border);
+  padding-top: 12px;
+}
+.rd-card__details > summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--rd-accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+.rd-card__details > summary::-webkit-details-marker { display: none; }
+.rd-card__details > summary::after { content: '▾'; transition: transform .15s; font-size: 10px; }
+.rd-card__details[open] > summary::after { transform: rotate(180deg); }
+.rd-card__details-body { padding-top: 10px; font-size: 12.5px; color: var(--rd-text-body); line-height: 1.55; }
+.rd-card__details-body h4 { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--rd-text-muted); margin: 8px 0 4px; }
+.rd-card__details-body ul { padding-left: 18px; margin: 4px 0; }
+.rd-card__details-body li { margin-bottom: 3px; }
+.rd-card__guide-link {
+  display: inline-block; margin-top: 6px;
+  font-size: 12px; font-weight: 600;
+  color: var(--rd-accent);
+  text-decoration: none;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+}
+.rd-card__guide-link:hover { border-bottom-color: var(--rd-accent); }
+
+.rd-card__foot {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rd-border);
+}
+.rd-card__deadline { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--rd-text-muted); flex-wrap: wrap; min-width: 0; }
+.rd-card__deadline strong { color: var(--rd-text-primary); font-weight: 600; }
+.rd-card__deadline.is-urgent { color: var(--rd-longshot); }
+.rd-card__deadline.is-urgent strong { color: var(--rd-longshot); }
+.rd-card__urgent-pill {
+  background: rgba(244,63,94,0.12);
+  color: #be123c;
+  border: 1px solid rgba(244,63,94,0.30);
+  border-radius: var(--rd-radius-pill);
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.rd-card__actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.rd-card__bookmark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--rd-border-strong);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--rd-text-muted);
+  transition: background .15s, color .15s, border-color .15s;
+}
+.rd-card__bookmark:hover { border-color: var(--rd-accent); color: var(--rd-accent); }
+.rd-card__bookmark:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
+.rd-card__bookmark[aria-pressed="true"] { background: rgba(99,102,241,0.10); color: var(--rd-accent); border-color: rgba(99,102,241,0.30); }
+.rd-card__apply {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--rd-accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s;
+}
+.rd-card__apply:hover { background: #4f46e5; }
+.rd-card__apply:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
+
+/* Shared status-pill (still used by colleges list rows) */
+.status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--rd-radius-pill);
+  padding: 4px 12px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.status-pill--in-state    { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+.status-pill--national    { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.status-pill--out-of-state{ background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.status-pill--safety      { background: rgba(16,185,129,0.12); color: #065f46; border-color: rgba(16,185,129,0.35); }
+.status-pill--target      { background: rgba(99,102,241,0.12); color: #3730a3; border-color: rgba(99,102,241,0.35); }
+.status-pill--reach       { background: rgba(245,158,11,0.12); color: #92400e; border-color: rgba(245,158,11,0.35); }
+.status-pill--longshot    { background: rgba(244,63,94,0.12);  color: #9f1239; border-color: rgba(244,63,94,0.35); }
+
+@media (max-width: 768px) {
+  .scholarship-grid.rd-list { grid-template-columns: 1fr; }
+  .rd-card { padding: 14px 16px; }
+  .rd-card__amount { font-size: 18px; }
+  .rd-card__foot { flex-wrap: wrap; }
+}
+
+/* ── Colleges list + map ──────────────────────────────────────────────── */
+.rd-colleges-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap: 20px;
+  margin: 12px 0 24px;
+}
+.rd-college-list {
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 560px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.rd-college-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0,1fr) minmax(96px, 130px);
+  gap: 12px;
+  align-items: center;
+  background: var(--rd-bg-surface);
+  border: 1px solid var(--rd-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s, transform .05s;
+}
+.rd-college-row:hover { border-color: var(--rd-border-strong); }
+.rd-college-row:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
+.rd-college-row.is-selected {
+  border: 2px solid var(--rd-accent);
+  padding: 11px 13px;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+.rd-college-row.is-selected.rd-tier--safety   { border-color: var(--rd-safety);   box-shadow: 0 0 0 3px rgba(16,185,129,0.18); }
+.rd-college-row.is-selected.rd-tier--target   { border-color: var(--rd-target);   box-shadow: 0 0 0 3px rgba(99,102,241,0.18); }
+.rd-college-row.is-selected.rd-tier--reach    { border-color: var(--rd-reach);    box-shadow: 0 0 0 3px rgba(245,158,11,0.18); }
+.rd-college-row.is-selected.rd-tier--longshot { border-color: var(--rd-longshot); box-shadow: 0 0 0 3px rgba(244,63,94,0.18); }
+.rd-row__index {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--rd-bg-muted);
+  font-size: 12px; font-weight: 700;
+  color: var(--rd-text-muted);
+}
+.rd-row__body { min-width: 0; overflow: hidden; }
+.rd-row__name { font-size: 14px; font-weight: 600; color: var(--rd-text-primary); margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-row__loc  { font-size: 11px; color: var(--rd-text-muted); display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.rd-row__right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-width: 0; overflow: hidden; }
+.rd-row__rate  { font-size: 13px; font-weight: 700; color: var(--rd-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; font-variant-numeric: tabular-nums; }
+.rd-pin-pending { font-size: 10px; color: var(--rd-text-subtle); margin-left: 4px; }
+
+.rd-college-map-pane {
+  display: grid;
+  grid-template-rows: minmax(280px, auto) auto;
+  gap: 16px;
+}
+.rd-college-map {
+  background: var(--rd-bg-surface);
+  border: 1px solid var(--rd-border);
+  border-radius: var(--rd-radius-card);
+  padding: 14px;
+  position: relative;
+}
+.rd-college-map svg { width: 100%; height: auto; display: block; max-height: 340px; }
+.rd-pin { cursor: pointer; transition: transform .15s; transform-origin: center; transform-box: fill-box; }
+.rd-pin:hover { transform: scale(1.15); }
+.rd-pin.is-selected .rd-pin__halo { animation: rd-pulse 1.6s ease-out infinite; }
+@keyframes rd-pulse {
+  0%   { r: 14; opacity: 0.5; }
+  100% { r: 28; opacity: 0; }
+}
+.rd-map-note { font-size: 11px; color: var(--rd-text-muted); margin-top: 8px; }
+
+.rd-college-detail {
+  background: var(--rd-bg-surface);
+  border: 1px solid var(--rd-border);
+  border-radius: var(--rd-radius-card);
+  overflow: hidden;
+}
+.rd-detail__band {
+  padding: 22px 22px 18px;
+  color: #fff;
+  background: var(--rd-target);
+}
+.rd-detail__band.rd-tier--safety   { background: var(--rd-safety); }
+.rd-detail__band.rd-tier--target   { background: var(--rd-target); }
+.rd-detail__band.rd-tier--reach    { background: var(--rd-reach); }
+.rd-detail__band.rd-tier--longshot { background: var(--rd-longshot); }
+.rd-detail__band-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; opacity: 0.85; margin-bottom: 6px; }
+.rd-detail__band-title { font-size: 20px; font-weight: 700; line-height: 1.25; }
+.rd-detail__band-sub { font-size: 12.5px; opacity: 0.9; margin-top: 2px; }
+
+.rd-detail__tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-bottom: 1px solid var(--rd-border);
+}
+.rd-tile {
+  padding: 16px;
+  text-align: center;
+  border-right: 1px solid var(--rd-border);
+}
+.rd-tile:last-child { border-right: none; }
+.rd-tile__value { font-size: 22px; font-weight: 700; color: var(--rd-text-primary); line-height: 1; margin-bottom: 4px; }
+.rd-tile__label { font-size: 11px; color: var(--rd-text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.rd-detail__chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 16px; }
+.rd-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--rd-bg-muted);
+  border: 1px solid var(--rd-border);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--rd-text-body);
+}
+
+.rd-detail__callout {
+  margin: 6px 16px 16px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--rd-target);
+  background: rgba(99,102,241,0.06);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--rd-text-body);
+  line-height: 1.5;
+}
+.rd-detail__callout.rd-tier--safety   { border-left-color: var(--rd-safety);   background: rgba(16,185,129,0.07); }
+.rd-detail__callout.rd-tier--target   { border-left-color: var(--rd-target);   background: rgba(99,102,241,0.06); }
+.rd-detail__callout.rd-tier--reach    { border-left-color: var(--rd-reach);    background: rgba(245,158,11,0.07); }
+.rd-detail__callout.rd-tier--longshot { border-left-color: var(--rd-longshot); background: rgba(244,63,94,0.07); }
+
+.rd-detail__empty { padding: 28px 22px; color: var(--rd-text-muted); font-size: 13px; text-align: center; }
+
+.rd-section { padding: 6px 16px 12px; }
+.rd-section__head { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rd-text-muted); margin-bottom: 8px; }
+.rd-dls { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.rd-dl  { background: var(--rd-bg-muted); border: 1px solid var(--rd-border); border-radius: 8px; padding: 8px 10px; font-size: 12px; color: var(--rd-text-body); }
+.rd-dl strong { display: block; font-size: 10px; color: var(--rd-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; font-weight: 700; }
+.rd-dl--rolling { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.rd-dl--rolling strong { color: #047857; }
+.rd-ideal { margin-top: 8px; font-size: 12.5px; color: var(--rd-text-body); }
+.rd-list-mile { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--rd-text-body); line-height: 1.55; }
+.rd-list-mile li { margin-bottom: 4px; }
+.rd-pricing { font-size: 12.5px; color: var(--rd-text-body); flex: 1; }
+.rd-detail__footer { display: flex; gap: 12px; align-items: center; padding: 14px 16px 16px; border-top: 1px solid var(--rd-border); flex-wrap: wrap; }
+.rd-detail__apply { font-size: 13px; padding: 9px 18px; }
+
+@media (max-width: 1024px) {
+  .rd-colleges-layout { grid-template-columns: 1fr; }
+  .rd-college-list { max-height: 320px; }
+}
+
+/* ── Empty state used by filter (no results) ──────────────────────────── */
+.rd-empty {
+  text-align: center;
+  padding: 40px 24px;
+  background: var(--rd-bg-surface);
+  border: 1px dashed var(--rd-border-strong);
+  border-radius: var(--rd-radius-card);
+}
+.rd-empty__icon { font-size: 32px; display: block; margin-bottom: 8px; }
+.rd-empty h3 { font-size: 16px; font-weight: 700; color: var(--rd-text-primary); margin-bottom: 4px; }
+.rd-empty p  { font-size: 13px; color: var(--rd-text-muted); margin-bottom: 14px; }
+
+/* ── REDESIGN PORT end ───────────────────────────────────────────────── */
 </style>
 </head>
 <body>
@@ -1059,10 +1600,8 @@ input:focus, select:focus, textarea:focus {
         <span class="nav-icon">❓</span> Help & Docs
       </div>
     </div>
-    <div class="sidebar-bottom">
-      <div class="status-item"><span class="dot-ok"></span> API Online</div>
-      <div class="status-item"><span class="dot-ok"></span> Claude Connected</div>
-    </div>
+    <!-- REDESIGN: status block removed — the top header already shows
+         "Claude AI Active" + the budget pill, so this duplicated. -->
   </nav>
 
   <!-- MAIN CONTENT -->
@@ -1151,46 +1690,34 @@ input:focus, select:focus, textarea:focus {
 
       <!-- CONTENT AREA WITH TABS -->
       <div class="content-area">
-        <div class="tab-bar">
-          <button class="tab active" onclick="switchTab('discover')">Discover</button>
-          <button class="tab" onclick="switchTab('apply')">Apply Guide</button>
-          <button class="tab" onclick="switchTab('insights')">Insights</button>
-          <button class="tab" onclick="switchTab('strategy')">Strategy</button>
-          <button class="tab" onclick="switchTab('essays')">Essays</button>
-          <button class="tab" onclick="switchTab('colleges')">🎓 Colleges</button>
-        </div>
+        <!-- REDESIGN: redundant top tab-bar removed — navigation is handled by
+             the left sidebar (and the mobile bottom nav). -->
 
         <!-- DISCOVER PANEL -->
         <div class="panel active" id="panel-discover">
-          <div style="margin-bottom:20px;">
-            <h2 style="font-size:18px;font-weight:700;margin-bottom:6px;">What is the Scholarship Finder?</h2>
-            <p style="color:var(--text-secondary);font-size:13px;line-height:1.6;max-width:700px;">The Scholarship Finder uses Claude AI to surface underutilized awards you likely haven't seen — from your home state, target schools, and national niche databases — ranked by your actual odds of winning.</p>
-          </div>
+          <!-- ── REDESIGN: HERO ─────────────────────────────────────────── -->
+          <section class="hero" aria-label="Scholarship Finder hero">
+            <div class="hero__inner">
+              <div class="hero__copy">
+                <span class="hero__eyebrow">SCHOLARSHIP FINDER</span>
+                <h1 class="hero__title">Find money. <span class="hero__title--accent">Win it.</span></h1>
+                <p class="hero__subtitle">AI-matched scholarships and college admission assessments tailored to your profile. Fill out your profile on the left, then start a search.</p>
+                <div class="hero__actions">
+                  <button type="button" class="btn btn--primary" id="heroSearchBtn">Find scholarships →</button>
+                  <button type="button" class="btn btn--ghost"   id="heroAssessBtn">Assess my colleges</button>
+                </div>
+                <div class="hero__stats">
+                  <div class="hero__stat"><strong id="heroStatCount">—</strong><span>scholarships matched</span></div>
+                  <div class="hero__stat"><strong id="heroStatTotal">—</strong><span>total award value</span></div>
+                  <div class="hero__stat"><strong>AI</strong><span>powered matching</span></div>
+                </div>
+              </div>
+              <div class="hero__visual" aria-hidden="true"></div>
+            </div>
+          </section>
 
-          <div class="feature-grid">
-            <div class="feature-card">
-              <span class="feature-card-icon">🔍</span>
-              <h3>Discover</h3>
-              <p>Fill your profile and AI matches you to underutilized scholarships ranked by win probability.</p>
-            </div>
-            <div class="feature-card">
-              <span class="feature-card-icon">📋</span>
-              <h3>Apply Guide</h3>
-              <p>Step-by-step checklist and AI-generated cover letter for each scholarship you choose.</p>
-            </div>
-            <div class="feature-card">
-              <span class="feature-card-icon">🧭</span>
-              <h3>Strategy</h3>
-              <p>5-phase AI advisor: profile intake, market research, tiered recommendations, and roadmap.</p>
-            </div>
-            <div class="feature-card">
-              <span class="feature-card-icon">✍️</span>
-              <h3>Essays</h3>
-              <p>Generate Common App essays, Why School letters, and scholarship cover letters instantly.</p>
-            </div>
-          </div>
-
-          <div id="welcome-state" class="welcome-state">
+          <!-- Existing welcome-state kept for error rendering (hidden by default). -->
+          <div id="welcome-state" class="welcome-state" style="display:none;">
             <span class="welcome-icon">🎓</span>
             <h2>Enter Your Profile</h2>
             <p>Fill in your details on the left and click Find Scholarships. Claude AI will surface underutilized funding you likely haven't seen before.</p>
@@ -1222,7 +1749,12 @@ input:focus, select:focus, textarea:focus {
               Confirm eligibility and current deadlines directly with each organization.
               This tool is a discovery aid, not an authoritative source.
             </div>
-            <div class="scholarship-grid" id="scholarship-grid"></div>
+            <!-- ── REDESIGN: CATEGORY FLOW ──────────────────────────────── -->
+            <section class="category-flow" aria-label="Scholarship categories">
+              <div class="category-flow__label">Browse by category</div>
+              <div class="category-flow__scroller" id="category-flow-scroller" role="tablist"></div>
+            </section>
+            <div class="scholarship-grid rd-list" id="scholarship-grid"></div>
 
             <div id="college-schol-section" style="display:none;margin-top:28px;">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
@@ -1275,11 +1807,23 @@ input:focus, select:focus, textarea:focus {
                 <button class="strategy-reset-btn" onclick="resetStrategy()">↺ Reset</button>
               </div>
             </div>
+            <div class="strategy-body">
             <div class="chat-messages" id="chat-messages"></div>
             <div class="chat-input-area">
-              <textarea id="chat-input" placeholder="Type your answer or ask a follow-up…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendStrategyMessage();}"></textarea>
+              <label class="chat-input-label" for="chat-input">Student Profile Details</label>
+              <textarea id="chat-input"
+                        aria-describedby="chat-input-help"
+                        placeholder="Share details about yourself so the assistant can tailor your strategy. For example:&#10;&#10;• GPA: 3.85 unweighted / 4.4 weighted&#10;• Intended major: Computer Science&#10;• Test scores: SAT 1480 (R760 / M720)&#10;• Awards: National Merit Commended, FIRST Robotics state finalist&#10;• Interests & activities: robotics club president, varsity debate, volunteer math tutor&#10;• Financial need: high — household AGI ≈ $55k&#10;• Anything unique: first-generation college student, bilingual (Spanish)"
+                        oninput="updateChatCharCount()"
+                        onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();sendStrategyMessage();}"></textarea>
+              <div class="chat-input-meta">
+                <span class="chat-input-help" id="chat-input-help">Include GPA, intended major, interests, awards, and any unique circumstances. The more detail, the better the scholarship matches.</span>
+                <span class="chat-input-counter" id="chat-input-counter" aria-live="polite">0 characters</span>
+              </div>
+              <div class="chat-input-hint">Press <strong>Ctrl/⌘ + Enter</strong> to send, or use the button.</div>
               <button class="chat-send-btn" id="chat-send-btn" onclick="sendStrategyMessage()">Send →</button>
             </div>
+            </div><!-- end strategy-body -->
           </div>
         </div>
 
@@ -1368,6 +1912,10 @@ input:focus, select:focus, textarea:focus {
   let currentScholarships = [];
   let activeScholarship   = null;
   let currentColleges     = [];
+  // Redesign-port state: active category-flow filter. Mutated only by
+  // redesign.js via the write-shim below — keeps a single source of truth.
+  let currentFilter       = 'all';
+  window.__setCurrentFilter = function (v) { currentFilter = (typeof v === 'string' && v) ? v : 'all'; };
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
   function toggleTag(btn) { btn.classList.toggle('active'); }
@@ -1377,7 +1925,6 @@ input:focus, select:focus, textarea:focus {
 
   function switchTab(name) {
     const names = ['discover','apply','insights','strategy','essays','colleges'];
-    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', names[i] === name));
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('panel-' + name).classList.add('active');
     document.querySelectorAll('.nav-item').forEach((n, i) => n.classList.toggle('active', names[i] === name));
@@ -1526,14 +2073,106 @@ input:focus, select:focus, textarea:focus {
     }
   }
 
-  function renderScholarships(scholarships) {
+  // ── Redesign helpers (card v2: richer reference layout) ─────────────────
+  function rdFormatAmount(raw) {
+    if (!raw) return '—';
+    const str = String(raw);
+    const m = str.replace(/,/g, '').match(/\d{3,}/);
+    if (!m) return str;
+    const n = parseInt(m[0], 10);
+    if (n >= 1000) {
+      const k = n / 1000;
+      return '$' + (k % 1 === 0 ? k.toString() : k.toFixed(1)) + 'k';
+    }
+    return '$' + n.toLocaleString();
+  }
+  function rdIsRenewable(s) {
+    const blob = ((s && s.amount) || '') + ' ' + ((s && s.description) || '');
+    return /\brenewable\b|\/yr\b|\/year\b|\bper year\b|\bannually\b/i.test(blob);
+  }
+  function rdDeriveEffort(s) {
+    const reqs = Array.isArray(s && s.requirements) ? s.requirements : [];
+    const blob = reqs.join(' ').toLowerCase();
+    if (/\bnomination|\bnominated\b/.test(blob)) return { label: 'Requires a nomination', cls: 'nomination', icon: '✋' };
+    const essayCount = (blob.match(/\bessay\b/g) || []).length;
+    if (essayCount >= 2)                                              return { label: essayCount + ' short essays', cls: 'essay', icon: '✍️' };
+    if (essayCount === 1 || /\bpersonal statement\b/.test(blob))      return { label: 'Essay required',          cls: 'essay', icon: '✍️' };
+    if (/\bshort answer|\bquick application|\b15.min/.test(blob))     return { label: '15-min application',      cls: 'no-essay', icon: '⚡' };
+    return { label: 'No essay', cls: 'no-essay', icon: '✓' };
+  }
+  function rdDeadlineUrgency(s) {
+    if (!s || !s.deadline) return { label: '', urgent: false };
+    const raw = String(s.deadline).trim();
+    if (/rolling/i.test(raw)) return { label: 'Rolling', urgent: false, isRolling: true };
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return { label: raw, urgent: false };
+    const now = new Date(); now.setHours(0,0,0,0);
+    const days = Math.floor((d - now) / 86400000);
+    if (days < 0)  return { label: raw, urgent: false, days };
+    if (days <= 14) return { label: raw, urgent: true, days };
+    return { label: raw, urgent: false, days };
+  }
+  function rdOddsBucket(applicants, winners) {
+    if (!applicants || !winners) return { label: 'Competition level varies', barPct: 50, cls: '' };
+    const ratio = Math.max(1, Math.round(applicants / winners));
+    let cls = '';
+    let label;
+    if (ratio <= 10)       { label = 'Excellent odds · 1 in ' + ratio; cls = ''; }
+    else if (ratio <= 30)  { label = 'Strong odds · 1 in '   + ratio; cls = ''; }
+    else if (ratio <= 75)  { label = 'Fair odds · 1 in '     + ratio; cls = 'rd-card__odds-label--mid'; }
+    else if (ratio <= 150) { label = 'Tough odds · 1 in '    + ratio; cls = 'rd-card__odds-label--mid'; }
+    else                   { label = 'Long shot · 1 in '     + ratio; cls = 'rd-card__odds-label--low'; }
+    // Log-scale fill so 1-in-3 reads near 95% and 1-in-1000 reads near 5%.
+    const barPct = Math.max(5, Math.min(100, Math.round(100 - (Math.log10(ratio) / Math.log10(200)) * 95)));
+    return { label, barPct, cls, ratio };
+  }
+  function rdSaveKey(s) {
+    // Stable key from title + organization. Falls back to title alone.
+    return (s.title || '').trim().toLowerCase() + '||' + (s.organization || '').trim().toLowerCase();
+  }
+  const RD_SAVE_LS_KEY = 'sf_saved';
+  function rdGetSavedSet() {
+    try {
+      const raw = localStorage.getItem(RD_SAVE_LS_KEY);
+      if (!raw) return new Set();
+      const arr = JSON.parse(raw);
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch (_) { return new Set(); }
+  }
+  function rdPersistSaved(set) {
+    try { localStorage.setItem(RD_SAVE_LS_KEY, JSON.stringify(Array.from(set))); } catch (_) {}
+  }
+  function rdToggleBookmark(btn, key) {
+    if (!btn || !key) return;
+    const set = rdGetSavedSet();
+    const isSaved = set.has(key);
+    if (isSaved) { set.delete(key); }
+    else         { set.add(key); }
+    rdPersistSaved(set);
+    const nowSaved = !isSaved;
+    btn.setAttribute('aria-pressed', nowSaved ? 'true' : 'false');
+    btn.textContent = nowSaved ? '🔖' : '🏷️';
+    btn.setAttribute('title', nowSaved ? 'Saved — click to unsave' : 'Save for later');
+  }
+
+  function renderScholarships(scholarships, opts) {
+    opts = opts || {};
     const grid = document.getElementById('scholarship-grid');
+    if (!grid) return;
     grid.innerHTML = '';
-    const total = scholarships.reduce((s,x) => s + (parseInt(x.amount.replace(/[^0-9]/g,''))||0), 0);
-    document.getElementById('result-count').textContent = scholarships.length;
-    document.getElementById('total-value').textContent  = '$' + total.toLocaleString() + '+';
-    document.getElementById('results-area').style.display = 'block';
-    populateApplyPickList(scholarships);
+
+    // Result-bar stats reflect the UNFILTERED total. On a filter-driven
+    // re-render, leave them alone so users still see "12 found" alongside
+    // the filtered list. Same for the apply-pick-list.
+    if (!opts.__fromFilter) {
+      const total = scholarships.reduce((s, x) => s + (parseInt((x.amount||'').replace(/[^0-9]/g,''))||0), 0);
+      const rc = document.getElementById('result-count'); if (rc) rc.textContent = scholarships.length;
+      const tv = document.getElementById('total-value');  if (tv) tv.textContent  = '$' + total.toLocaleString() + '+';
+      const ra = document.getElementById('results-area'); if (ra) ra.style.display = 'block';
+      populateApplyPickList(scholarships);
+    }
+
+    const savedSet = rdGetSavedSet();
 
     scholarships.forEach((s, i) => {
       const rawScholarUrl = s.applicationUrl || s.applyUrl || s.url || s.website || '';
@@ -1541,47 +2180,126 @@ input:focus, select:focus, textarea:focus {
       const applyHref     = hasRealUrl
         ? escUrl(rawScholarUrl)
         : 'https://www.google.com/search?q=' + encodeURIComponent((s.title || '') + ' scholarship apply ' + new Date().getFullYear());
+
+      // Pass the index in the FULL currentScholarships array (not the
+      // possibly-filtered render array) to openApplyGuide so it always
+      // resolves the correct object.
+      const fullIdx = (typeof currentScholarships !== 'undefined' && Array.isArray(currentScholarships))
+        ? currentScholarships.indexOf(s) : i;
+      const guideIdx = fullIdx >= 0 ? fullIdx : i;
+
+      const scopeRaw   = s.scope || 'national';
+      const scopeKey   = (scopeRaw === 'in-state' || scopeRaw === 'national' || scopeRaw === 'out-of-state') ? scopeRaw : 'national';
+      const scopeLabel = scopeKey === 'in-state' ? '📍 In-State' : scopeKey === 'national' ? '🌎 National' : '✈️ Out-of-State';
+
       const applicants = s.estimatedApplicants || null;
       const winners    = s.estimatedWinners    || null;
-      const ratio      = (applicants && winners) ? Math.round(applicants/winners) : null;
-      let barPct = 50, barColor = 'var(--yellow)';
-      if (ratio !== null) {
-        barPct = Math.max(5, Math.min(100, Math.round(100-(Math.log10(Math.max(ratio,1))/Math.log10(200))*95)));
-        barColor = ratio<=10?'var(--green)':ratio<=30?'#76c442':ratio<=75?'var(--yellow)':ratio<=150?'#f97316':'var(--red)';
-      }
-      const oddsLabel  = ratio !== null ? `1 in ${ratio.toLocaleString()} odds` : s.competitionLevel;
-      const countLabel = (applicants&&winners) ? `~${applicants.toLocaleString()} applicants · ${winners.toLocaleString()} awards/yr` : '';
-      const scopePill  = s.scope==='in-state'?'in-state':s.scope==='national'?'national':'out-state';
 
-      const card = document.createElement('div');
-      card.className = 's-card';
+      const amountFmt   = rdFormatAmount(s.amount);
+      const renewable   = rdIsRenewable(s);
+      const effort      = rdDeriveEffort(s);
+      const deadline    = rdDeadlineUrgency(s);
+      const odds        = rdOddsBucket(applicants, winners);
+
+      const saveKey   = rdSaveKey(s);
+      const isSaved   = savedSet.has(saveKey);
+      const saveKeyAttr = saveKey.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+      const badges = [];
+      badges.push(`<span class="rd-badge rd-badge--scope-${scopeKey}">${escHtml(scopeLabel)}</span>`);
+      if (s.isUnderutilized) badges.push(`<span class="rd-badge rd-badge--underused">★ Underused</span>`);
+      badges.push(`<span class="rd-badge rd-badge--${effort.cls}">${effort.icon} ${escHtml(effort.label)}</span>`);
+
+      const oddsCountLabel = (applicants && winners)
+        ? `~${applicants.toLocaleString()} apply · ${winners.toLocaleString()}/yr`
+        : (s.competitionLevel ? escHtml(s.competitionLevel) : '');
+
+      const requirementsHtml = Array.isArray(s.requirements) && s.requirements.length
+        ? `<h4>Requirements</h4><ul>${s.requirements.map(r => `<li>${escHtml(r)}</li>`).join('')}</ul>`
+        : '';
+      const targetedHtml = s.targetedFor
+        ? `<h4>Best fit for</h4><p>${escHtml(s.targetedFor)}</p>`
+        : '';
+
+      const deadlineHtml = (() => {
+        if (!deadline.label) return '';
+        if (deadline.isRolling) return `<div class="rd-card__deadline">🕐 <strong>Rolling</strong></div>`;
+        const cls = deadline.urgent ? 'rd-card__deadline is-urgent' : 'rd-card__deadline';
+        const pill = deadline.urgent && typeof deadline.days === 'number'
+          ? `<span class="rd-card__urgent-pill">${deadline.days}d left</span>`
+          : '';
+        return `<div class="${cls}">🕐 Due <strong>${escHtml(deadline.label)}</strong> ${pill}</div>`;
+      })();
+
+      const card = document.createElement('article');
+      card.className = 'rd-card';
+      card.setAttribute('data-scope', scopeKey);
+      card.setAttribute('data-saved', isSaved ? 'true' : 'false');
       card.innerHTML = `
-        <div class="s-card-top">
-          <span class="s-rank">#${i+1} Best Odds</span>
-          <div class="s-title">${escHtml(s.title)}</div>
-          <div class="s-amount">${escHtml(s.amount)}</div>
-        </div>
-        <div class="s-meta">
-          <span class="s-pill ${scopePill}">${escHtml((s.scope||'national').toUpperCase())}</span>
-          ${s.isUnderutilized ? '<span class="s-pill underutilized">★ UNDERUTILIZED</span>' : `<span class="s-pill">${escHtml((s.type||'').toUpperCase())}</span>`}
-          <span class="s-pill">📅 ${escHtml(s.deadline)}</span>
-        </div>
-        <div class="s-body">
-          <strong>${escHtml(s.organization)}</strong> — ${escHtml(s.description)}
-          ${s.isUnderutilized ? `<div class="s-unclaimed">Why unclaimed: ${escHtml(s.whyUnderutilized)}</div>` : ''}
-        </div>
-        <div class="s-odds-bar">
-          <div class="odds-track"><div class="odds-fill" style="width:${barPct}%;background:${barColor};"></div></div>
-          <span class="odds-label" style="color:${barColor};">${oddsLabel}</span>
-          ${countLabel ? `<span class="odds-count">${countLabel}</span>` : ''}
-        </div>
-        <div class="s-footer">
-          <span class="s-deadline">Deadline: <strong>${escHtml(s.deadline)}</strong></span>
-          <a class="s-apply-btn" href="${applyHref}" target="_blank" rel="noopener noreferrer">${hasRealUrl ? '🔗' : '🔍'} Apply Now →</a>
-          <button class="s-apply-btn" style="margin-left:4px;background:#475569;font-size:11px;padding:6px 10px;" onclick="openApplyGuide(${i})">Guide</button>
-        </div>`;
+        <header class="rd-card__head">
+          <div class="rd-card__title-block">
+            <h3 class="rd-card__title">${escHtml(s.title || 'Untitled scholarship')}</h3>
+            ${s.organization ? `<div class="rd-card__org">${escHtml(s.organization)}</div>` : ''}
+          </div>
+          <div class="rd-card__amount-block">
+            <div class="rd-card__amount">${escHtml(amountFmt)}</div>
+            ${renewable ? `<div class="rd-card__renewable">Renewable</div>` : ''}
+          </div>
+        </header>
+
+        <div class="rd-card__badges">${badges.join('')}</div>
+
+        ${s.description ? `<div class="rd-card__desc">${escHtml(s.description)}</div>` : ''}
+
+        ${(s.isUnderutilized && s.whyUnderutilized) ? `
+        <div class="rd-card__overlooked">
+          <strong>⚡ Why it's overlooked:</strong>${escHtml(s.whyUnderutilized)}
+        </div>` : ''}
+
+        ${(applicants && winners) ? `
+        <div class="rd-card__odds">
+          <div class="rd-card__odds-stats">
+            <span class="rd-card__odds-label ${odds.cls}">${escHtml(odds.label)}</span>
+            <span class="rd-card__odds-count">${oddsCountLabel}</span>
+          </div>
+          <div class="rd-card__odds-track"><div class="rd-card__odds-fill ${odds.cls ? 'rd-card__odds-fill--' + odds.cls.replace('rd-card__odds-label--','') : ''}" style="width:${odds.barPct}%;"></div></div>
+        </div>` : ''}
+
+        ${(requirementsHtml || targetedHtml) ? `
+        <details class="rd-card__details">
+          <summary>Eligibility &amp; details</summary>
+          <div class="rd-card__details-body">
+            ${requirementsHtml}
+            ${targetedHtml}
+            <a class="rd-card__guide-link" role="button" tabindex="0" onclick="openApplyGuide(${guideIdx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openApplyGuide(${guideIdx});}">View full application guide →</a>
+          </div>
+        </details>` : ''}
+
+        <footer class="rd-card__foot">
+          ${deadlineHtml || '<span></span>'}
+          <div class="rd-card__actions">
+            <button type="button" class="rd-card__bookmark" aria-pressed="${isSaved ? 'true' : 'false'}"
+                    title="${isSaved ? 'Saved — click to unsave' : 'Save for later'}"
+                    onclick="rdToggleBookmark(this, '${saveKeyAttr}')">${isSaved ? '🔖' : '🏷️'}</button>
+            <a class="rd-card__apply" href="${applyHref}" target="_blank" rel="noopener noreferrer" aria-label="Apply for ${escHtml(s.title || 'this scholarship')}">${hasRealUrl ? 'Apply' : 'Find'} →</a>
+          </div>
+        </footer>`;
       grid.appendChild(card);
     });
+
+    // Color the odds-fill based on the odds bucket. We set inline width but
+    // need the color from the bucket class — apply via JS to avoid duplicating
+    // CSS rules for every bucket.
+    grid.querySelectorAll('.rd-card__odds-fill').forEach(el => {
+      if      (el.classList.contains('rd-card__odds-fill--low')) el.style.background = 'var(--rd-longshot)';
+      else if (el.classList.contains('rd-card__odds-fill--mid')) el.style.background = 'var(--rd-reach)';
+      else                                                       el.style.background = 'var(--rd-safety)';
+    });
+
+    // Redesign hook — drives hero stats + category pills.
+    if (typeof window.redesignOnScholarshipsRendered === 'function') {
+      try { window.redesignOnScholarshipsRendered(scholarships, opts); } catch (e) { /* never block render */ }
+    }
   }
 
   // ── College apply URL lookup (hardcoded for common schools, Google fallback for rest) ──
@@ -2073,11 +2791,19 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
     document.getElementById('chat-input').focus();
   }
 
+  function updateChatCharCount(){
+    const ta=document.getElementById('chat-input');
+    const counter=document.getElementById('chat-input-counter');
+    if(!ta||!counter) return;
+    const n=ta.value.length;
+    counter.textContent=n.toLocaleString()+' character'+(n===1?'':'s');
+  }
+
   async function sendStrategyMessage() {
     const input=document.getElementById('chat-input');
     const text=input.value.trim();
     if(!text||document.getElementById('chat-send-btn').disabled) return;
-    input.value=''; appendBubble('user',simpleMarkdown(text));
+    input.value=''; updateChatCharCount(); appendBubble('user',simpleMarkdown(text));
     strategyHistory.push({role:'user',content:text});
     document.getElementById('chat-send-btn').disabled=true; showTyping();
     try{
@@ -2285,7 +3011,20 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
   function renderColleges(colleges, searchEnhanced, topPoolUsed, topPoolMajor) {
     currentColleges = colleges;                          // save for PDF export
     const resultsEl = document.getElementById('colleges-results');
+    if (!resultsEl) return;
     resultsEl.style.display = 'block';
+
+    if (!Array.isArray(colleges) || colleges.length === 0) {
+      resultsEl.innerHTML =
+        '<div class="rd-empty"><span class="rd-empty__icon">🎓</span>' +
+        '<h3>No assessment data yet</h3>' +
+        '<p>Add at least one school on the left and run the assessment.</p>' +
+        '<button class="colleges-discover-btn" onclick="assessColleges()">🎓 Assess My Colleges</button></div>';
+      if (typeof window.redesignOnCollegesRendered === 'function') {
+        try { window.redesignOnCollegesRendered([]); } catch (e) {}
+      }
+      return;
+    }
 
     const listed    = colleges.filter(c =>  c.isListed);
     const suggested = colleges.filter(c => !c.isListed);
@@ -2294,115 +3033,55 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
     listed.sort(   (a, b) => (tierOrder[a.tier] ?? 4) - (tierOrder[b.tier] ?? 4));
     suggested.sort((a, b) => (tierOrder[a.tier] ?? 4) - (tierOrder[b.tier] ?? 4));
 
-    const tierLabel = {
-      safety:   '🟢 SAFETY',
-      target:   '🔵 TARGET',
-      reach:    '🟡 REACH',
-      longshot: '🔴 LONG SHOT',
-    };
+    const tierLabel = { safety: 'Safety', target: 'Target', reach: 'Reach', longshot: 'Long Shot' };
 
-    function buildCard(c) {
-      const tier     = c.tier || 'target';
-      const colApply = getCollegeApplyUrl(c);
+    function buildRow(c, displayIdx) {
+      const tier = c.tier || 'target';
+      const safeName = escHtml(c.name || '');
+      // data-college uses the RAW name (HTML attr-escaped) so JS lookups
+      // against `colleges[].name` match exactly.
+      const dataName = (c.name || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 
-      // ── Build deadline grid ─────────────────────────────────────────────
-      const dl = c.applicationDeadlines || {};
-      function dlCell(date, label) {
-        if (!date || date === 'null' || date === null) {
-          return `<div class="c-deadline-cell na">
-            <div class="c-deadline-date">N/A</div>
-            <div class="c-deadline-type">${label}</div>
-          </div>`;
-        }
-        if (label === 'Rolling' && date === true) {
-          return `<div class="c-deadline-cell rolling">
-            <div class="c-deadline-date">Open</div>
-            <div class="c-deadline-type">Rolling</div>
-          </div>`;
-        }
-        return `<div class="c-deadline-cell">
-          <div class="c-deadline-date">${escHtml(date)}</div>
-          <div class="c-deadline-type">${label}</div>
-        </div>`;
-      }
-
-      const priceNoteEsc = [
-        c.netPriceInState  ? 'In-state: '     + escHtml(c.netPriceInState)  : '',
-        c.netPriceOutState ? 'Out-of-state: ' + escHtml(c.netPriceOutState) : '',
-      ].filter(Boolean).join(' · ') || 'Net price: see college website';
-
-      const deadlineSection = `
-        <div class="c-timeline">
-          <div class="c-timeline-header">⏰ <span>Application Deadlines & Ideal Start Date</span></div>
-          <div class="c-deadlines">
-            ${dlCell(dl.earlyDecision,   'Early Decision')}
-            ${dlCell(dl.earlyAction,     'Early Action')}
-            ${dlCell(dl.regularDecision, 'Regular Decision')}
-            ${dlCell(dl.rolling ? true : null, 'Rolling')}
-          </div>
-          ${c.idealStartDate ? `
-          <div class="c-ideal-start">
-            <strong>🗓 Start by:</strong>
-            <span>${escHtml(c.idealStartDate)}</span>
-          </div>` : ''}
-          ${Array.isArray(c.keyMilestones) && c.keyMilestones.length ? `
-          <div class="c-milestones">
-            ${c.keyMilestones.map(m => `
-              <div class="c-milestone">
-                <div class="c-milestone-dot"></div>
-                <span>${escHtml(m)}</span>
-              </div>`).join('')}
-          </div>` : ''}
-        </div>`;
+      // Compact the rate for the row — the AI sometimes returns long strings
+      // like "63% (general); ~17% for main campus competitive pool". Show the
+      // first percentage; the full text lives on the title attr and in the
+      // detail panel.
+      const rawRate = (c.overallAcceptRate || '').toString();
+      const rateMatch = rawRate.match(/[~<>]?\s*\d+(?:\.\d+)?\s*%/);
+      const shortRate = rateMatch ? rateMatch[0].replace(/\s+/g, '') : (rawRate || '—');
+      const rateTitle = rawRate && rawRate !== shortRate ? rawRate : '';
 
       return `
-        <div class="c-card tier-${tier}">
-          <div class="c-card-top">
-            <div style="flex:1;">
-              <div class="c-name">${escHtml(c.name)}</div>
-              <div class="c-location">${escHtml(c.location || '')}</div>
-            </div>
-            <span class="tier-badge ${tier}">${tierLabel[tier] || tier.toUpperCase()}</span>
+        <div class="rd-college-row rd-tier--${tier}" data-college="${dataName}" data-tier="${tier}" role="option" tabindex="0" aria-selected="false">
+          <div class="rd-row__index">${displayIdx}</div>
+          <div class="rd-row__body">
+            <div class="rd-row__name" title="${safeName}">${safeName}</div>
+            <div class="rd-row__loc">📍 ${escHtml(c.location || '—')}</div>
           </div>
-
-          <div class="c-rates">
-            <div class="c-rate-cell">
-              <div class="rate-num">${escHtml(c.overallAcceptRate || '—')}</div>
-              <div class="rate-lbl">Overall</div>
-            </div>
-            <div class="c-rate-cell">
-              <div class="rate-num">${escHtml(c.inStateRate || '—')}</div>
-              <div class="rate-lbl">In-State</div>
-            </div>
-            <div class="c-rate-cell">
-              <div class="rate-num">${escHtml(c.outStateRate || '—')}</div>
-              <div class="rate-lbl">Out-of-State</div>
-            </div>
-          </div>
-
-          <div class="c-stats">
-            ${c.businessSchoolRank ? `<span class="c-stat-pill rank">🏆 ${escHtml(c.businessSchoolRank)}</span>` : (c.nationalRank ? `<span class="c-stat-pill rank">🏆 ${escHtml(c.nationalRank)}</span>` : '')}
-            ${c.topSpecialties     ? `<span class="c-stat-pill rank">🎯 ${escHtml(c.topSpecialties)}</span>`     : (c.programRank ? `<span class="c-stat-pill rank">🎯 ${escHtml(c.programRank)}</span>` : '')}
-            ${c.universityRank     ? `<span class="c-stat-pill" style="font-size:10px;color:var(--text-muted);">Univ: ${escHtml(c.universityRank)}</span>` : ''}
-            ${c.admittedGPARange ? `<span class="c-stat-pill">📊 GPA ${escHtml(c.admittedGPARange)}</span>` : ''}
-            ${c.admittedSATRange && c.admittedSATRange !== 'N/A' ? `<span class="c-stat-pill">📝 SAT ${escHtml(c.admittedSATRange)}</span>` : ''}
-            ${c.admittedACTRange && c.admittedACTRange !== 'N/A' ? `<span class="c-stat-pill">📝 ACT ${escHtml(c.admittedACTRange)}</span>` : ''}
-            ${c.edBoost && c.edBoost !== 'N/A (public)' && c.edBoost !== 'N/A' ? `<span class="c-stat-pill">⚡ ${escHtml(c.edBoost)}</span>` : ''}
-          </div>
-
-          ${c.programNote ? `<div class="c-program-note">📚 ${escHtml(c.programNote)}</div>` : ''}
-          ${c.fitNote     ? `<div class="c-fit-note">💡 ${escHtml(c.fitNote)}</div>` : ''}
-
-          ${deadlineSection}
-
-          <div class="c-footer">
-            <div class="c-price">${priceNoteEsc}</div>
-            <a class="c-apply-btn" href="${colApply.url}" target="_blank" rel="noopener noreferrer">${colApply.isReal ? '🔗 Apply' : '🔍 Find Application'}</a>
+          <div class="rd-row__right">
+            <span class="status-pill status-pill--${tier}">${tierLabel[tier] || tier.toUpperCase()}</span>
+            <span class="rd-row__rate"${rateTitle ? ' title="' + escHtml(rateTitle) + '"' : ''}>${escHtml(shortRate)}</span>
           </div>
         </div>`;
     }
 
-    let html = `
+    let listHtml = '';
+    let idx = 0;
+    if (listed.length) {
+      listHtml += `<div class="colleges-section-title">Your Schools (${listed.length})</div>`;
+      listHtml += listed.map(c => buildRow(c, ++idx)).join('');
+    }
+    if (suggested.length) {
+      const majorLabels = { business: 'Business', cs: 'Computer Science', engineering: 'Engineering', premed: 'Pre-Med / Biology' };
+      const majorLabel  = majorLabels[topPoolMajor] || (topPoolMajor || '');
+      const sectionTitle = topPoolUsed && topPoolMajor
+        ? `🏆 Top ${majorLabel} Programs (${suggested.length})`
+        : `AI-Suggested Matches (${suggested.length})`;
+      listHtml += `<div class="colleges-section-title" style="margin-top:18px;">${sectionTitle}</div>`;
+      listHtml += suggested.map(c => buildRow(c, ++idx)).join('');
+    }
+
+    let topBar = `
       <div class="result-bar" style="margin-bottom:16px;">
         <div class="result-stat">
           <div class="num">${colleges.length}</div>
@@ -2421,36 +3100,25 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
         <button class="pdf-download-btn" onclick="downloadCollegePDF()" style="margin-left:auto;">📥 Download PDF Report</button>
       </div>`;
 
+    let banners = '';
     if (searchEnhanced) {
-      html += `<div style="margin-bottom:12px;padding:8px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;font-size:12px;color:#1d4ed8;">🔍 Admission statistics enhanced with live web search data.</div>`;
+      banners += `<div style="margin-bottom:12px;padding:8px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;font-size:12px;color:#1d4ed8;">🔍 Admission statistics enhanced with live web search data.</div>`;
     } else {
-      html += `<div class="ai-disclaimer">⚠️ <strong>AI-estimated statistics — verify on each college's official admissions page.</strong> Acceptance rates and ranges are based on Claude AI's training data and may not reflect the most recent admission cycle.</div>`;
+      banners += `<div class="ai-disclaimer">⚠️ <strong>AI-estimated statistics — verify on each college's official admissions page.</strong> Acceptance rates and ranges are based on Claude AI's training data and may not reflect the most recent admission cycle.</div>`;
     }
     if (topPoolUsed && topPoolMajor) {
       const majorLabelsB = { business: 'Business', cs: 'Computer Science', engineering: 'Engineering', premed: 'Pre-Med / Biology' };
-      html += `<div style="margin-bottom:12px;padding:8px 12px;background:#faf5ff;border:1px solid #d8b4fe;border-radius:6px;font-size:12px;color:#6b21a8;">🏆 <strong>Top 50 ${majorLabelsB[topPoolMajor] || topPoolMajor} Programs mode active</strong> — since you listed fewer than 3 out-of-state schools, AI suggestions are drawn from the US News 2026 ranked list.</div>`;
+      banners += `<div style="margin-bottom:12px;padding:8px 12px;background:#faf5ff;border:1px solid #d8b4fe;border-radius:6px;font-size:12px;color:#6b21a8;">🏆 <strong>Top 50 ${majorLabelsB[topPoolMajor] || topPoolMajor} Programs mode active</strong> — since you listed fewer than 3 out-of-state schools, AI suggestions are drawn from the US News 2026 ranked list.</div>`;
     }
 
-    if (listed.length) {
-      html += `<div class="colleges-section-title">Your Schools (${listed.length})</div>`;
-      html += `<div class="college-grid">${listed.map(buildCard).join('')}</div>`;
-    }
-
-    if (suggested.length) {
-      const majorLabels = { business: 'Business', cs: 'Computer Science', engineering: 'Engineering', premed: 'Pre-Med / Biology' };
-      const majorLabel  = majorLabels[topPoolMajor] || (topPoolMajor || '');
-      const sectionTitle = topPoolUsed && topPoolMajor
-        ? `🏆 Top-Ranked ${majorLabel} Programs — Auto-Suggested (${suggested.length})`
-        : `AI-Suggested Matches (${suggested.length})`;
-      const sectionDesc = topPoolUsed && topPoolMajor
-        ? `No out-of-state schools were entered — suggestions below are drawn from the <strong>Top 50 ${majorLabel} Programs (US News 2026)</strong>, filtered to fit your GPA, test scores, and profile.`
-        : `These schools weren't on your list but are strong fits based on your profile — GPA, scores, home state, and major.`;
-      html += `<div class="colleges-section-title" style="margin-top:24px;">${sectionTitle}</div>`;
-      html += `<p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">${sectionDesc}</p>`;
-      html += `<div class="college-grid">${suggested.map(buildCard).join('')}</div>`;
-    }
-
-    html += `
+    resultsEl.innerHTML = topBar + banners + `
+      <div class="rd-colleges-layout">
+        <aside class="rd-college-list" role="listbox" aria-label="Colleges">${listHtml}</aside>
+        <main class="rd-college-map-pane">
+          <div id="rd-college-map" class="rd-college-map" aria-label="US map of selected colleges"></div>
+          <div id="rd-college-detail" class="rd-college-detail" aria-live="polite"></div>
+        </main>
+      </div>
       <div style="margin-top:16px;padding:12px 16px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text-muted);">
         <strong style="color:var(--text-secondary);">Tier guide:</strong>
         🟢 Safety = very likely admit &nbsp;·&nbsp; 🔵 Target = reasonable odds &nbsp;·&nbsp; 🟡 Reach = competitive &nbsp;·&nbsp; 🔴 Long Shot = low probability
@@ -2459,7 +3127,10 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
         <button class="colleges-discover-btn" style="font-size:12px;padding:8px 22px;" onclick="assessColleges()">↺ Re-run Assessment</button>
       </div>`;
 
-    resultsEl.innerHTML = html;
+    // Redesign hook — populates map + detail panel + wires row clicks.
+    if (typeof window.redesignOnCollegesRendered === 'function') {
+      try { window.redesignOnCollegesRendered(colleges); } catch (e) { /* never block render */ }
+    }
   }
 
   // ── College PDF Export ────────────────────────────────────────────────────
@@ -2920,8 +3591,8 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
       document.getElementById('colleges-welcome').style.display = 'none';
       document.getElementById('colleges-loading').style.display = 'none';
       renderColleges(colleges, cse, topSchoolPoolUsed, topSchoolMajor);
-      // Add a "✓ Ready" badge to the Colleges tab so the user knows to check it
-      const collegesTab = document.querySelector('.tab[onclick="switchTab(\'colleges\')"]');
+      // Add a "✓ Ready" badge to the sidebar Colleges item so the user knows to check it
+      const collegesTab = document.querySelector('.nav-item[onclick="switchTab(\'colleges\')"]');
       if (collegesTab && !collegesTab.querySelector('.ready-badge')) {
         const readyBadge = document.createElement('span');
         readyBadge.className = 'ready-badge';
@@ -3008,5 +3679,9 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
   <div class="mbn-item" onclick="switchTab('essays')"><span class="mbn-icon">✍️</span><span>Essays</span></div>
   <div class="mbn-item" onclick="switchTab('colleges')"><span class="mbn-icon">🎓</span><span>Colleges</span></div>
 </nav>
+
+<!-- ── REDESIGN PORT — helper bundle. Loads after the inline script so it
+     can reference top-level identifiers declared there. ─────────────── -->
+<script src="js/redesign.js" defer></script>
 </body>
 </html>
