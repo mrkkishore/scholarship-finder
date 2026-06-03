@@ -363,6 +363,24 @@
     return null;
   }
 
+  // Deterministic "has this cycle's deadline already passed?" check.
+  // Mirrors the server cycle: fall (Aug–Dec) = current year, spring (Jan–Jul)
+  // = next year. Conservative — returns false for anything it can't parse.
+  function rdDeadlinePassed(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return false;
+    if (/rolling|varies|priority|n\/?a/i.test(dateStr)) return false;
+    var MO = { january:0,february:1,march:2,april:3,may:4,june:5,july:6,august:7,september:8,october:9,november:10,december:11,
+               jan:0,feb:1,mar:2,apr:3,jun:5,jul:6,aug:7,sep:8,sept:8,oct:9,nov:10,dec:11 };
+    var m = dateStr.toLowerCase().match(/([a-z]+)\.?\s+(\d{1,2})/);
+    if (!m || !(m[1] in MO)) return false;
+    var mo = MO[m[1]], day = parseInt(m[2], 10);
+    if (!day || day > 31) return false;
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    var cycleStart = now.getFullYear();              // mirrors server curYear
+    var yr = mo >= 7 ? cycleStart : cycleStart + 1;   // fall = this year, spring = next
+    return new Date(yr, mo, day) < now;
+  }
+
   // ── College detail panel ─────────────────────────────────────────────────
   function renderCollegeDetail(c) {
     var host = document.getElementById('rd-college-detail');
@@ -384,14 +402,26 @@
     if (c.admittedSATRange && c.admittedSATRange !== 'N/A') chips += '<span class="rd-chip">📝 SAT ' + eh(c.admittedSATRange) + '</span>';
     if (c.admittedACTRange && c.admittedACTRange !== 'N/A') chips += '<span class="rd-chip">📝 ACT ' + eh(c.admittedACTRange) + '</span>';
     if (c.edBoost && c.edBoost !== 'N/A (public)' && c.edBoost !== 'N/A') chips += '<span class="rd-chip">⚡ ' + eh(c.edBoost) + '</span>';
+    if ((c.universityRank || c.businessSchoolRank) && c.rankingVerified === false) chips += '<span class="rd-chip rd-chip--warn">⚠ rank unverified</span>';
 
     // Deadlines block
     var dl = c.applicationDeadlines || {};
     var dlBits = [];
-    if (dl.earlyDecision)   dlBits.push('<div class="rd-dl"><strong>Early Decision</strong>' + eh(dl.earlyDecision) + '</div>');
-    if (dl.earlyAction)     dlBits.push('<div class="rd-dl"><strong>Early Action</strong>' + eh(dl.earlyAction) + '</div>');
-    if (dl.regularDecision) dlBits.push('<div class="rd-dl"><strong>Regular Decision</strong>' + eh(dl.regularDecision) + '</div>');
+    function dlBit(label, val) {
+      var passed = rdDeadlinePassed(val);
+      return '<div class="rd-dl' + (passed ? ' rd-dl--passed' : '') + '"><strong>' + label + '</strong>' +
+             eh(val) + (passed ? '<span class="rd-dl-flag">⚠ may have passed</span>' : '') + '</div>';
+    }
+    if (dl.earlyDecision)   dlBits.push(dlBit('Early Decision', dl.earlyDecision));
+    if (dl.earlyAction)     dlBits.push(dlBit('Early Action', dl.earlyAction));
+    if (dl.regularDecision) dlBits.push(dlBit('Regular Decision', dl.regularDecision));
     if (dl.rolling === true) dlBits.push('<div class="rd-dl rd-dl--rolling"><strong>Rolling</strong>Open</div>');
+
+    // Deadline-verification badge — driven by the server's deterministic
+    // deadlineSearchedSchools list (was this school actually web-searched?).
+    var dlVerifyBadge = c._deadlineVerified
+      ? '<span class="rd-verify rd-verify--ok">🌐 Web-verified</span>'
+      : '<span class="rd-verify rd-verify--warn">⚠ Confirm on official site</span>';
 
     // Milestones
     var milestones = '';
@@ -444,7 +474,7 @@
       (chips ? '<div class="rd-detail__chips">' + chips + '</div>' : '') +
       (c.fitNote ? '<div class="rd-detail__callout rd-tier--' + tier + '">💡 ' + eh(c.fitNote) + '</div>' : '') +
       (c.programNote ? '<div class="rd-detail__callout">📚 ' + eh(c.programNote) + '</div>' : '') +
-      (dlBits.length ? '<div class="rd-section"><div class="rd-section__head">Application deadlines</div><div class="rd-dls">' + dlBits.join('') + '</div>' +
+      (dlBits.length ? '<div class="rd-section"><div class="rd-section__head">Application deadlines' + dlVerifyBadge + '</div><div class="rd-dls">' + dlBits.join('') + '</div>' +
         (c.idealStartDate ? '<div class="rd-ideal">🗓 Start by: <strong>' + eh(c.idealStartDate) + '</strong></div>' : '') + '</div>' : '') +
       milestones + tips +
       (price || applyHtml ? '<div class="rd-detail__footer">' + price + applyHtml + '</div>' : '');

@@ -1337,6 +1337,18 @@ input:focus, select:focus, textarea:focus {
 }
 .rd-card__apply:hover { background: #4f46e5; }
 .rd-card__apply:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
+/* Guardrail 1: broken-link state */
+.rd-card__apply--broken { background: #dc2626; }
+.rd-card__apply--broken:hover { background: #b91c1c; }
+/* Guardrail 3: calibrated deadline precision */
+.rd-card__deadline--unverified { color: #92400e; font-style: italic; }
+.rd-card__deadline--approx { color: #92400e; }
+/* Guardrail 4: fail-closed grounding banner */
+.grounding-banner {
+  background: #fffbeb; color: #92400e; border: 1px solid #fde68a;
+  border-radius: 8px; padding: 10px 14px; margin: 0 0 14px;
+  font-size: 12.5px; line-height: 1.5; font-weight: 500;
+}
 
 /* Shared status-pill (still used by colleges list rows) */
 .status-pill {
@@ -1507,6 +1519,12 @@ input:focus, select:focus, textarea:focus {
 .rd-dl--rolling { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
 .rd-dl--rolling strong { color: #047857; }
 .rd-ideal { margin-top: 8px; font-size: 12.5px; color: var(--rd-text-body); }
+.rd-verify { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: .03em; padding: 1px 7px; border-radius: 9px; margin-left: 6px; text-transform: none; vertical-align: middle; }
+.rd-verify--ok   { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.rd-verify--warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.rd-dl--passed { background: #fef2f2; border-color: #fecaca; }
+.rd-dl-flag { display: block; margin-top: 3px; font-size: 9.5px; font-weight: 700; color: #b91c1c; text-transform: none; letter-spacing: 0; }
+.rd-chip--warn { background: #fffbeb; color: #92400e; border-color: #fde68a; }
 .rd-list-mile { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--rd-text-body); line-height: 1.55; }
 .rd-list-mile li { margin-bottom: 4px; }
 .rd-pricing { font-size: 12.5px; color: var(--rd-text-body); flex: 1; }
@@ -1744,11 +1762,14 @@ input:focus, select:focus, textarea:focus {
               <button class="pdf-download-btn" onclick="downloadPDF()">📥 Download PDF Report</button>
             </div>
             <div class="ai-disclaimer">
-              ⚠️ <strong>AI-generated results — always verify before applying.</strong>
-              Scholarships, deadlines, and award amounts are based on Claude AI's training data, not a live database.
-              Confirm eligibility and current deadlines directly with each organization.
-              This tool is a discovery aid, not an authoritative source.
+              ⚠️ <strong>Verify award amount &amp; eligibility before applying.</strong>
+              The <strong>amount</strong> shown may be the maximum award, not the typical one — and listed scholarships
+              match your search but are <strong>not confirmed eligible for you</strong>. Past-deadline results are filtered
+              out automatically, but always confirm the exact deadline, amount, and eligibility on each sponsor's official
+              page. This tool is a discovery aid, not an authoritative source.
             </div>
+            <!-- Guardrail 4: fail-closed banner when live search is unavailable -->
+            <div id="grounding-banner" class="grounding-banner" style="display:none;"></div>
             <!-- ── REDESIGN: CATEGORY FLOW ──────────────────────────────── -->
             <section class="category-flow" aria-label="Scholarship categories">
               <div class="category-flow__label">Browse by category</div>
@@ -2062,6 +2083,7 @@ input:focus, select:focus, textarea:focus {
         }
         badge.style.display = 'inline-block';
       }
+      setGroundingBanner(data.grounding);
       loadingEl.style.display = 'none';
       renderScholarships(currentScholarships);
       await renderInsights(major, inState, year, identities, homeState, outState);
@@ -2073,18 +2095,38 @@ input:focus, select:focus, textarea:focus {
     }
   }
 
+  // Guardrail 4: show a yellow "live search unavailable" banner when results
+  // are not Tavily-grounded. grounding: 'tavily' | 'ai_only' | 'failed'.
+  function setGroundingBanner(grounding) {
+    const el = document.getElementById('grounding-banner');
+    if (!el) return;
+    if (grounding && grounding !== 'tavily') {
+      el.textContent = '⚠️ Live search is temporarily unavailable. Results below are AI-suggested and have not been verified against current scholarship listings. Try again in a few hours.';
+      el.style.display = 'block';
+    } else {
+      el.style.display = 'none';
+      el.textContent = '';
+    }
+  }
+
   // ── Redesign helpers (card v2: richer reference layout) ─────────────────
   function rdFormatAmount(raw) {
     if (!raw) return '—';
-    const str = String(raw);
-    const m = str.replace(/,/g, '').match(/\d{3,}/);
-    if (!m) return str;
-    const n = parseInt(m[0], 10);
-    if (n >= 1000) {
-      const k = n / 1000;
-      return '$' + (k % 1 === 0 ? k.toString() : k.toFixed(1)) + 'k';
-    }
-    return '$' + n.toLocaleString();
+    const str = String(raw).trim();
+    // Guardrail 3: preserve the source qualifier — never collapse
+    // "Up to $10,000" into "$10,000", and keep ranges / "Varies".
+    if (/varies|amount varies|see details/i.test(str)) return 'Varies';
+    const nums = (str.replace(/,/g, '').match(/\d{3,}/g) || []).map(n => parseInt(n, 10));
+    if (!nums.length) return str;
+    const fmt = n => n >= 1000
+      ? '$' + ((n / 1000) % 1 === 0 ? (n / 1000) : (n / 1000).toFixed(1)) + 'k'
+      : '$' + n.toLocaleString();
+    const upTo  = /up to|maximum|\bmax\b/i.test(str);
+    const perYr = /per year|\/yr|\/year|annually/i.test(str);
+    let core = (nums.length >= 2 && /[-–—]/.test(str)) ? fmt(nums[0]) + '–' + fmt(nums[1]) : fmt(nums[0]);
+    if (upTo)  core = 'Up to ' + core;
+    if (perYr) core += '/yr';
+    return core;
   }
   function rdIsRenewable(s) {
     const blob = ((s && s.amount) || '') + ' ' + ((s && s.description) || '');
@@ -2177,9 +2219,10 @@ input:focus, select:focus, textarea:focus {
     scholarships.forEach((s, i) => {
       const rawScholarUrl = s.applicationUrl || s.applyUrl || s.url || s.website || '';
       const hasRealUrl    = !!(rawScholarUrl && escUrl(rawScholarUrl) !== '#');
-      const applyHref     = hasRealUrl
-        ? escUrl(rawScholarUrl)
-        : 'https://www.google.com/search?q=' + encodeURIComponent((s.title || '') + ' scholarship apply ' + new Date().getFullYear());
+      const searchHref    = 'https://www.google.com/search?q=' + encodeURIComponent((s.title || '') + ' scholarship apply ' + new Date().getFullYear());
+      const applyHref     = hasRealUrl ? escUrl(rawScholarUrl) : searchHref;
+      // Guardrail 1: link-liveness. 'dead' → swap Apply for a search fallback.
+      const linkDead      = s.url_status === 'dead';
 
       // Pass the index in the FULL currentScholarships array (not the
       // possibly-filtered render array) to openApplyGuide so it always
@@ -2222,6 +2265,14 @@ input:focus, select:focus, textarea:focus {
         : '';
 
       const deadlineHtml = (() => {
+        // Guardrail 3: calibrated precision — be honest about how sure we are.
+        const precision = s.deadline_precision;
+        if (precision === 'inferred') {
+          return `<div class="rd-card__deadline rd-card__deadline--unverified">🕐 Deadline not verified — check official site</div>`;
+        }
+        if (precision === 'month' && deadline.label) {
+          return `<div class="rd-card__deadline rd-card__deadline--approx">🕐 Around <strong>${escHtml(deadline.label)}</strong> — verify on official site</div>`;
+        }
         if (!deadline.label) return '';
         if (deadline.isRolling) return `<div class="rd-card__deadline">🕐 <strong>Rolling</strong></div>`;
         const cls = deadline.urgent ? 'rd-card__deadline is-urgent' : 'rd-card__deadline';
@@ -2281,7 +2332,9 @@ input:focus, select:focus, textarea:focus {
             <button type="button" class="rd-card__bookmark" aria-pressed="${isSaved ? 'true' : 'false'}"
                     title="${isSaved ? 'Saved — click to unsave' : 'Save for later'}"
                     onclick="rdToggleBookmark(this, '${saveKeyAttr}')">${isSaved ? '🔖' : '🏷️'}</button>
-            <a class="rd-card__apply" href="${applyHref}" target="_blank" rel="noopener noreferrer" aria-label="Apply for ${escHtml(s.title || 'this scholarship')}">${hasRealUrl ? 'Apply' : 'Find'} →</a>
+            ${linkDead
+              ? `<a class="rd-card__apply rd-card__apply--broken" href="${searchHref}" target="_blank" rel="noopener noreferrer" title="The application link appears to be broken" aria-label="Link broken — search for ${escHtml(s.title || 'this scholarship')}">🔗 Link broken — search →</a>`
+              : `<a class="rd-card__apply" href="${applyHref}" target="_blank" rel="noopener noreferrer" aria-label="Apply for ${escHtml(s.title || 'this scholarship')}">${hasRealUrl ? 'Apply' : 'Find'} →</a>`}
           </div>
         </footer>`;
       grid.appendChild(card);
@@ -2994,6 +3047,7 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
       const colleges = JSON.parse(jsonMatch[0]);
       if (!Array.isArray(colleges) || !colleges.length) throw new Error('Empty results — please try again');
 
+      markDeadlineVerification(colleges, data);
       loadingEl.style.display = 'none';
       renderColleges(colleges, data.searchEnhanced, data.topSchoolPoolUsed, data.topSchoolMajor);
 
@@ -3006,6 +3060,18 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
         <p>${err.message}</p>
         <button class="colleges-discover-btn" onclick="assessColleges()">↺ Try Again</button>`;
     }
+  }
+
+  // Annotate each college with a deterministic web-verification flag for its
+  // deadlines, using the server's deadlineSearchedSchools list (authoritative)
+  // combined with the model's own deadlinesVerified claim.
+  function markDeadlineVerification(colleges, data) {
+    const list = (data && Array.isArray(data.deadlineSearchedSchools)) ? data.deadlineSearchedSchools : [];
+    const dss  = new Set(list);
+    (colleges || []).forEach(c => {
+      c._deadlineVerified = dss.has(c.name) && c.deadlinesVerified !== false;
+    });
+    return colleges;
   }
 
   function renderColleges(colleges, searchEnhanced, topPoolUsed, topPoolMajor) {
@@ -3212,7 +3278,9 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
           ${c.fitNote ? `<p class="detail-fit"">💡 ${c.fitNote}</p>` : ''}
           ${c.programNote ? `<p class="detail-desc" style="font-style:italic;color:#475569;">📚 ${c.programNote}</p>` : ''}
 
-          <div class="req-label">Application Deadlines</div>
+          <div class="req-label">Application Deadlines ${c._deadlineVerified
+            ? '<span style="color:#047857;">— web-verified</span>'
+            : '<span style="color:#92400e;">— unverified, confirm on official site</span>'}</div>
           <table class="detail-table">
             <tr><th>Early Decision</th><th>Early Action</th><th>Regular Decision</th><th>Rolling</th></tr>
             <tr>
@@ -3457,7 +3525,7 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
     if (!jsonMatch) throw new Error('No scholarship data returned — please try again');
     const scholarships = JSON.parse(jsonMatch[0]);
     if (!Array.isArray(scholarships) || !scholarships.length) throw new Error('Empty results — please try again');
-    return { scholarships, searchEnhanced: data.searchEnhanced, queriesSucceeded: data.queriesSucceeded };
+    return { scholarships, searchEnhanced: data.searchEnhanced, queriesSucceeded: data.queriesSucceeded, grounding: data.grounding };
   }
 
   async function fetchCollegeScholarships(profile) {
@@ -3501,6 +3569,7 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
     if (!jsonMatch) throw new Error('No college data returned');
     const colleges = JSON.parse(jsonMatch[0]);
     if (!Array.isArray(colleges) || !colleges.length) throw new Error('Empty results');
+    markDeadlineVerification(colleges, data);
     return { colleges, searchEnhanced: data.searchEnhanced, topSchoolPoolUsed: data.topSchoolPoolUsed, topSchoolMajor: data.topSchoolMajor };
   }
 
@@ -3554,7 +3623,7 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
       return;
     }
 
-    const { scholarships, searchEnhanced, queriesSucceeded } = scholResult.value;
+    const { scholarships, searchEnhanced, queriesSucceeded, grounding } = scholResult.value;
     scholarships.sort((a, b) => {
       const rA = (a.estimatedApplicants || 9999) / Math.max(a.estimatedWinners || 1, 1);
       const rB = (b.estimatedApplicants || 9999) / Math.max(b.estimatedWinners || 1, 1);
@@ -3572,6 +3641,7 @@ FORMATTING: Use markdown: ## for phase headers, ### for scholarship names, **bol
       }
       badge.style.display = 'inline-block';
     }
+    setGroundingBanner(grounding);
 
     renderScholarships(scholarships);
     await renderInsights(profile.major, profile.inState, profile.year, profile.identities, profile.homeState, profile.outState);

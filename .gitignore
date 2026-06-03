@@ -11,6 +11,9 @@ server.err
 *.log
 *.err
 
+# Guardrail JSONL logs (eligibility drops, redirect tracking)
+logs/
+
 # OS
 .DS_Store
 Thumbs.db
